@@ -23,9 +23,9 @@ applications:
             - cd packages/frontend
             - npm run build
             - echo "Build completed"
-            - ls -la .next
+            - ls -la
       artifacts:
-        baseDirectory: packages/frontend/.next
+        baseDirectory: packages/frontend/out
         files:
           - '**/*'
       cache:

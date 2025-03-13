@@ -4,10 +4,10 @@ const path = require('path');
 const nextConfig = {
   reactStrictMode: true,
   output: 'export',
+  distDir: 'out',
   images: {
     unoptimized: true,
   },
-  trailingSlash: false,
   webpack: (config, { isServer }) => {
     if (!isServer) {
       // Don't attempt to import these modules on the client side
