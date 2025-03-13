@@ -4,12 +4,24 @@ applications:
       phases:
         preBuild:
           commands:
+            - echo "Starting preBuild phase"
+            - npm --version
+            - node --version
+            - echo "Current directory:"
+            - pwd
+            - ls -la
+            - echo "Installing root dependencies"
             - npm ci
-            - cd packages/shared && npm ci && npm run build
-            - cd ../frontend && npm ci
+            - echo "Installing and building shared package"
+            - cd packages/shared && npm ci && npm run build && cd ../..
+            - echo "Installing frontend dependencies"
+            - cd packages/frontend && npm ci && cd ../..
         build:
           commands:
-            - cd packages/frontend && npm run build
+            - echo "Starting build phase"
+            - echo "Building frontend"
+            - cd packages/frontend
+            - npm run build
       artifacts:
         baseDirectory: packages/frontend/.next
         files:
