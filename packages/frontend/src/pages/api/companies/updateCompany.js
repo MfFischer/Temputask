@@ -1,8 +1,8 @@
 import { createPagesServerClient } from '@supabase/auth-helpers-nextjs';
 
 export default async function handler(req, res) {
-  // Only allow POST requests
-  if (req.method !== 'POST') {
+  // Allow both POST and PATCH requests
+  if (req.method !== 'POST' && req.method !== 'PATCH') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 

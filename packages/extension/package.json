@@ -1,15 +1,14 @@
 {
-    "name": "@tempos-ai/extension",
-    "version": "1.0.0",
-    "private": true,
-    "description": "Browser extension for tracking site activity with Tempu Task",
-    "scripts": {
-      "build": "mkdir -p dist && cp -r manifest.json background.js icons popup options dist/",
-      "package": "npm run build && cd dist && zip -r ../tempos-ai-extension.zip *",
-      "clean": "rm -rf dist tempos-ai-extension.zip"
-    },
-    "devDependencies": {
-      "eslint": "^8.46.0"
-    }
+  "name": "@tempos-ai/extension",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Browser extension for tracking site activity with Tempu Task",
+  "scripts": {
+    "build": "if not exist dist mkdir dist && copy manifest.json dist\\ && copy background.js dist\\ && mkdir dist\\popup && copy popup\\*.* dist\\popup\\ && mkdir dist\\options && copy options\\*.* dist\\options\\",
+    "package": "npm run build && cd dist && tar -acf ../tempos-ai-extension.zip *",
+    "clean": "if exist dist rmdir /s /q dist && if exist tempos-ai-extension.zip del tempos-ai-extension.zip"
+  },
+  "devDependencies": {
+    "eslint": "^8.46.0"
   }
-  
+}

@@ -160,6 +160,8 @@ tempos-ai/                         # Root directory
 │   │       │   ├── NotificationSettings.js
 │   │       ├── reports/          # Report components/            
 │   │       │   ├── SiteActivityReport.js
+│   │       ├── lib/                 
+│   │       │   ├── db.js
 │   │       ├── contexts/         # React contexts
 │   │       │   ├── AuthContext.js
 │   │       │   ├── NotificationContext.js

@@ -27,7 +27,6 @@ export const useCompanies = () => {
     setError(null);
     
     try {
-      // Add timestamp to prevent browser caching
       const timestamp = new Date().getTime();
       const response = await fetch(`/api/companies/getCompanies?_t=${timestamp}`, {
         headers: {
@@ -42,7 +41,6 @@ export const useCompanies = () => {
       }
       
       const data = await response.json();
-      console.log('Fetched companies:', data.companies); // Debug log
       setCompanies(data.companies || []);
     } catch (err) {
       console.error('Error fetching companies:', err);
@@ -73,9 +71,7 @@ export const useCompanies = () => {
       }
       
       const data = await response.json();
-      console.log(`Fetched projects for company ${companyId}:`, data.projects);
       
-      // Store projects for this company
       setCompanyProjects(prev => ({
         ...prev,
         [companyId]: data.projects || []
@@ -95,8 +91,6 @@ export const useCompanies = () => {
     if (!user) return null;
     
     try {
-      console.log('Creating company:', companyData); // Debug log
-      
       const response = await fetch('/api/companies/createCompany', {
         method: 'POST',
         headers: {
@@ -111,15 +105,12 @@ export const useCompanies = () => {
       }
       
       const { company } = await response.json();
-      console.log('Created company:', company); // Debug log
       
-      // Add project_count to new company
       const newCompany = {
         ...company,
         project_count: 0
       };
       
-      // Update local state
       setCompanies(prevCompanies => [newCompany, ...prevCompanies]);
       
       return newCompany;
@@ -135,14 +126,14 @@ export const useCompanies = () => {
     if (!user) return null;
     
     try {
-      const response = await fetch(`/api/companies/updateCompany`, {
-        method: 'PATCH',
+      const response = await fetch('/api/companies/updateCompany', {
+        method: 'POST', // Changed from PATCH to POST to match API endpoint
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-          company_id: companyId,
-          updates 
+          id: companyId, // Changed from company_id to id to match API expectations
+          ...updates 
         }),
       });
       
@@ -178,7 +169,7 @@ export const useCompanies = () => {
     if (!user) return false;
     
     try {
-      const response = await fetch(`/api/companies/deleteCompany`, {
+      const response = await fetch('/api/companies/deleteCompany', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

@@ -9,6 +9,10 @@ applications:
         build:
           commands:
             - npm run build --workspace=packages/frontend # Build frontend
+        # Add post-build phase if needed
+        postBuild:
+          commands:
+            - npm run test # If you have tests
       artifacts:
         baseDirectory: packages/frontend/.next
         files:
@@ -19,3 +23,7 @@ applications:
           - packages/frontend/node_modules/**/*
           - packages/shared/node_modules/**/*
           - .next/cache/**/*
+      # Add environment configuration
+      environment:
+        variables:
+          NODE_ENV: production
