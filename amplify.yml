@@ -4,14 +4,13 @@ applications:
       phases:
         preBuild:
           commands:
-            - npm install
-            - cd packages/shared && npm run build
+            - npm ci # More reliable than npm install for CI/CD
+            - npm run build --workspace=packages/shared # Build shared package first
         build:
           commands:
-            - cd packages/frontend && npm run build
-            - cd packages/frontend && npx next export
+            - npm run build --workspace=packages/frontend # Build frontend
       artifacts:
-        baseDirectory: packages/frontend/out
+        baseDirectory: packages/frontend/.next
         files:
           - '**/*'
       cache:
@@ -19,3 +18,4 @@ applications:
           - node_modules/**/*
           - packages/frontend/node_modules/**/*
           - packages/shared/node_modules/**/*
+          - .next/cache/**/*
