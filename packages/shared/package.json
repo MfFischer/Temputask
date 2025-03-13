@@ -9,10 +9,14 @@
     "dev": "tsc --watch",
     "lint": "eslint ."
   },
-  "dependencies": {},
+  "dependencies": {
+    "@prisma/client": "^5.0.0",
+    "pg": "^8.11.0"
+  },
   "devDependencies": {
     "typescript": "^5.1.6",
     "eslint": "^8.46.0",
-    "@types/node": "^20.4.5"
+    "@types/node": "^20.4.5",
+    "@types/pg": "^8.10.0"
   }
 }

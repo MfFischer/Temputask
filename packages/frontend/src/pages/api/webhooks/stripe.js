@@ -1,6 +1,6 @@
 import Stripe from 'stripe';
 import { buffer } from 'micro';
-import { pool } from '../../../shared/lib/db';
+import { db } from '@shared/lib/db';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;

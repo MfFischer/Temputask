@@ -4,15 +4,12 @@ applications:
       phases:
         preBuild:
           commands:
-            - npm ci # More reliable than npm install for CI/CD
-            - npm run build --workspace=packages/shared # Build shared package first
+            - npm ci
+            - cd packages/shared && npm ci && npm run build && cd ..
+            - cd frontend && npm ci
         build:
           commands:
-            - npm run build --workspace=packages/frontend # Build frontend
-        # Add post-build phase if needed
-        postBuild:
-          commands:
-            - npm run test # If you have tests
+            - cd packages/frontend && NODE_ENV=production npm run build
       artifacts:
         baseDirectory: packages/frontend/.next
         files:
@@ -20,10 +17,5 @@ applications:
       cache:
         paths:
           - node_modules/**/*
-          - packages/frontend/node_modules/**/*
-          - packages/shared/node_modules/**/*
-          - .next/cache/**/*
-      # Add environment configuration
-      environment:
-        variables:
-          NODE_ENV: production
+          - packages/*/node_modules/**/*
+          - packages/frontend/.next/cache/**/*

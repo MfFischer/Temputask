@@ -1,7 +1,7 @@
 # Tempu Task
 
 <div align="center">
-  <img src="/public/icons/logo.svg" alt="Tempu Task Logo" width="120"/>
+  <img src="frontend/public/icons/logo.svg" alt="Tempu Task Logo" width="120"/>
   
   **AI-Powered Productivity & Time Tracking**
   

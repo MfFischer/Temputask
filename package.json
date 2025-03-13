@@ -1,24 +1,11 @@
 {
-    "name": "tempos-ai",
-    "version": "0.1.0",
+    "name": "temputask",
     "private": true,
     "workspaces": [
-        "packages/*"
+      "packages/*"
     ],
     "scripts": {
-        "dev": "npm run dev --workspace=packages/frontend",
-        "build": "npm run build --workspaces",
-        "start": "npm run start --workspace=packages/frontend",
-        "lint": "npm run lint --workspaces",
-        "format": "prettier --write ."
-    },
-    "devDependencies": {
-        "prettier": "^3.0.1"
-    },
-    "dependencies": {
-        "@supabase/auth-helpers-nextjs": "^0.10.0",
-        "@supabase/auth-helpers-react": "^0.5.0",
-        "micro": "^10.0.1",
-        "stripe": "^17.7.0"
+      "build": "npm run build --workspace=packages/shared && npm run build --workspace=packages/frontend",
+      "dev": "npm run dev --workspace=packages/frontend"
     }
-}
+  }

@@ -33,13 +33,13 @@ export function TimeTrackingProvider({ children }) {
 
     async function loadProjects() {
       try {
-        const { data, error } = await supabase
-          .from('projects')
-          .select('id, name, color')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
+        const response = await fetch('/api/timeTracking/getProjects');
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to load projects');
+        }
+        
         setProjects(data || []);
       } catch (err) {
         console.error('Error loading projects:', err);
@@ -47,7 +47,7 @@ export function TimeTrackingProvider({ children }) {
     }
 
     loadProjects();
-  }, [user, supabase]);
+  }, [user]);
 
   // Load time entries for today
   useEffect(() => {
@@ -58,21 +58,16 @@ export function TimeTrackingProvider({ children }) {
       
       try {
         // Check for active timer
-        const { data: activeTimerData, error: activeTimerError } = await supabase
-          .from('time_entries')
-          .select(`
-            *,
-            projects(name, color)
-          `)
-          .eq('user_id', user.id)
-          .is('end_time', null)
-          .order('start_time', { ascending: false })
-          .limit(1)
-          .single();
-
-        if (activeTimerError && activeTimerError.code !== 'PGRST116') {
-          console.error('Error fetching active timer:', activeTimerError);
-        } else if (activeTimerData) {
+        const response = await fetch('/api/timeTracking/getActiveTimer');
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to fetch active timer');
+        }
+        
+        const activeTimerData = data.activeTimer;
+        
+        if (activeTimerData) {
           console.log('Found active timer:', activeTimerData);
           setActiveTimer(activeTimerData);
           
@@ -81,7 +76,6 @@ export function TimeTrackingProvider({ children }) {
             setFocusMode(true);
             
             // If this is a focus timer, figure out when it should end
-            // Since we don't have planned_duration in the database, parse it from the description
             const descRegex = /Focus Session \((\d+) min\)/;
             const match = activeTimerData.description ? activeTimerData.description.match(descRegex) : null;
             
@@ -95,7 +89,6 @@ export function TimeTrackingProvider({ children }) {
               
               console.log(`Resumed focus timer: ${focusMinutes} minutes, ends at ${endTime.toISOString()}`);
             } else {
-              // Default to 25 minutes if we can't parse it
               setFocusDuration(25);
               
               const startTime = new Date(activeTimerData.start_time);
@@ -113,34 +106,16 @@ export function TimeTrackingProvider({ children }) {
           setIsPaused(false);
         }
 
-        // Get today's date in ISO format
-        const todayStart = getStartOfDay();
+        // Get today's entries from API
+        const entriesResponse = await fetch('/api/timeTracking/getTimeEntries');
+        const entriesData = await entriesResponse.json();
         
-        // Fetch all time entries for today
-        const { data, error } = await supabase
-          .from('time_entries')
-          .select(`
-            id,
-            project_id,
-            category,
-            description,
-            start_time,
-            end_time,
-            duration,
-            projects(name, color)
-          `)
-          .eq('user_id', user.id)
-          .gte('start_time', todayStart)
-          .order('start_time', { ascending: false });
-
-        if (error) {
-          throw error;
+        if (!entriesResponse.ok) {
+          throw new Error(entriesData.error || 'Failed to fetch time entries');
         }
 
-        setTimeEntries(data || []);
-        
-        // Calculate summary statistics
-        calculateSummary(data || []);
+        setTimeEntries(entriesData.timeEntries || []);
+        calculateSummary(entriesData.timeEntries || []);
       } catch (err) {
         console.error('Error loading time entries:', err);
         setError('Failed to load time entries');
