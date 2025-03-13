@@ -1,0 +1,18 @@
+{
+    "name": "@tempos-ai/backend",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+      "deploy": "supabase functions deploy",
+      "lint": "eslint .",
+      "build": "echo 'No build step required'"
+    },
+    "dependencies": {
+      "@supabase/supabase-js": "^2.31.0",
+      "@tempos-ai/shared": "file:../shared"
+    },
+    "devDependencies": {
+      "eslint": "^8.46.0",
+      "supabase": "^1.93.0"
+    }
+  }

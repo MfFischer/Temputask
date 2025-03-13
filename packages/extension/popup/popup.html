@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tempu Task</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">
+        <img src="../icons/icon48.png" alt="Tempu Task Logo">
+        <h1>Tempu Task</h1>
+      </div>
+      
+      <div class="toggle-container">
+        <label class="toggle" for="trackingCheckbox">
+          <input type="checkbox" id="trackingCheckbox">
+          <span class="slider"></span>
+          <span class="visually-hidden">Toggle tracking on/off</span>
+        </label>
+        <span id="trackingStatus">Tracking</span>
+      </div>
+    
+    <div class="content">
+      <!-- Login state (before authentication) -->
+      <div id="loginState" class="state-container">
+        <p>Connect to your Tempu Task account to start tracking your site activity.</p>
+        <button id="connectBtn" class="primary-button">Connect Account</button>
+        <button id="loginBtn" class="secondary-button">Already have a token?</button>
+      </div>
+      
+      <!-- Token input state -->
+      <div id="tokenInputState" class="state-container hidden">
+        <div class="input-group">
+          <label for="userIdInput">User ID</label>
+          <input type="text" id="userIdInput" placeholder="Enter your user ID">
+        </div>
+        <div class="input-group">
+          <label for="tokenInput">Auth Token</label>
+          <input type="text" id="tokenInput" placeholder="Enter your auth token">
+        </div>
+        <div class="button-group">
+          <button id="saveTokenBtn" class="primary-button">Save</button>
+          <button id="cancelTokenBtn" class="secondary-button">Cancel</button>
+        </div>
+      </div>
+      
+      <!-- Connected state (after authentication) -->
+      <div id="connectedState" class="state-container hidden">
+        <div class="stat-item">
+          <span class="stat-label">Status:</span>
+          <span id="connectionStatus" class="stat-value">Connected</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">User ID:</span>
+          <span id="userIdDisplay" class="stat-value">Loading...</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Sites tracked:</span>
+          <span id="siteCount" class="stat-value">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Last sync:</span>
+          <span id="lastSync" class="stat-value">Never</span>
+        </div>
+        
+        <div class="button-group">
+          <button id="syncNowBtn" class="primary-button">Sync Now</button>
+          <button id="disconnectBtn" class="secondary-button">Disconnect</button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="footer">
+      <a href="#" id="openOptionsBtn">Options</a>
+      <a href="#" id="openDashboardBtn">Open Dashboard</a>
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>

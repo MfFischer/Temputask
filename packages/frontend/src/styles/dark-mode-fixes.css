@@ -1,0 +1,282 @@
+/* src/styles/dark-mode-fixes.css */
+
+/* Global dark mode text colors */
+.dark {
+  color-scheme: dark;
+}
+
+.dark .text-gray-700,
+.dark .text-gray-800,
+.dark .text-gray-900 {
+  color: rgb(248, 250, 252) !important; /* slate-50 */
+}
+
+.dark .text-gray-500,
+.dark .text-gray-600 {
+  color: rgb(226, 232, 240) !important; /* slate-200 */
+}
+
+.dark .text-gray-400 {
+  color: rgb(148, 163, 184) !important; /* slate-400 */
+}
+
+/* Preserve sidebar gradient in dark mode - don't override it */
+.dark aside:not([class*="bg-gradient"]) {
+  background-color: rgb(67, 56, 202) !important; /* indigo-700 */
+  background-image: linear-gradient(to bottom, rgb(67, 56, 202), rgb(126, 34, 206), rgb(124, 58, 237)) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.dark aside .text-gray-700 {
+  color: rgb(226, 232, 240) !important; /* slate-200 */
+}
+
+.dark aside .text-gray-400 {
+  color: rgb(148, 163, 184) !important; /* slate-400 */
+}
+
+/* Preserve footer gradient in dark mode - don't override it */
+.dark footer:not([class*="bg-gradient"]) {
+  background-color: rgb(67, 56, 202) !important; /* indigo-700 */
+  background-image: linear-gradient(to right, rgba(79, 70, 229, 0.9), rgba(124, 58, 237, 0.9), rgba(139, 92, 246, 0.9)) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Fix card backgrounds to match our theme */
+.dark .card,
+.dark .bg-white {
+  background-color: rgb(30, 27, 75) !important; /* indigo-950 */
+}
+
+.dark .bg-gray-50,
+.dark .bg-gray-100 {
+  background-color: rgb(49, 46, 129) !important; /* indigo-900 */
+}
+
+/* Fix main background to match our theme */
+.dark main.bg-gray-50,
+.dark body,
+.dark .bg-gray-50 {
+  background-color: rgb(15, 23, 42) !important; /* slate-900 */
+}
+
+/* Fix form elements */
+.dark select,
+.dark input,
+.dark textarea {
+  background-color: rgb(55, 48, 163) !important; /* indigo-800 */
+  color: rgb(248, 250, 252) !important; /* slate-50 */
+  border-color: rgb(99, 102, 241) !important; /* indigo-500 */
+}
+
+.dark select option {
+  background-color: rgb(55, 48, 163); /* indigo-800 */
+}
+
+/* Fix focus timer circles */
+.dark .bg-primary-500 {
+  background-color: rgb(139, 92, 246) !important; /* violet-500 */
+  color: white !important;
+}
+
+/* Fix active/hover states */
+.dark .hover\:bg-gray-50:hover {
+  background-color: rgb(79, 70, 229, 0.2) !important; /* indigo-600 with opacity */
+}
+
+.dark .hover\:bg-gray-100:hover {
+  background-color: rgb(79, 70, 229, 0.2) !important; /* indigo-600 with opacity */
+}
+
+/* Fix stats cards */
+.dark .text-xl.font-medium,
+.dark .text-2xl.font-bold,
+.dark .font-medium,
+.dark .font-semibold,
+.dark .font-bold {
+  color: rgb(248, 250, 252) !important; /* slate-50 */
+}
+
+/* Fix buttons */
+.dark .btn-primary {
+  background-color: rgb(139, 92, 246) !important; /* violet-500 */
+  color: white !important;
+}
+
+.dark .btn-primary:hover {
+  background-color: rgb(124, 58, 237) !important; /* violet-600 */
+}
+
+.dark .btn-secondary {
+  background-color: rgb(55, 48, 163) !important; /* indigo-800 */
+  color: rgb(226, 232, 240) !important; /* slate-200 */
+  border-color: rgb(99, 102, 241) !important; /* indigo-500 */
+}
+
+.dark .btn-secondary:hover {
+  background-color: rgb(67, 56, 202) !important; /* indigo-700 */
+}
+
+/* Fix modals */
+.dark .modal-content {
+  background-color: rgb(30, 27, 75) !important; /* indigo-950 */
+  color: rgb(248, 250, 252) !important; /* slate-50 */
+}
+
+/* Fix border colors */
+.dark .border,
+.dark .border-t,
+.dark .border-b,
+.dark .border-l,
+.dark .border-r {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Fix header */
+.dark header:not([class*="bg-gradient"]) {
+  background-color: rgb(30, 27, 75) !important; /* indigo-950 */
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Improve contrast for links */
+.dark a:not(.btn):not([class*="bg-"]):not([class*="text-"]) {
+  color: rgb(216, 180, 254) !important; /* violet-300 */
+}
+
+.dark a:hover:not(.btn):not([class*="bg-"]):not([class*="text-"]) {
+  color: rgb(240, 219, 255) !important; /* violet-200 */
+}
+
+/* Fix disabled buttons */
+.dark button:disabled,
+.dark .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Fix loading states */
+.dark .animate-pulse {
+  background-color: rgb(67, 56, 202, 0.3) !important; /* indigo-700 with opacity */
+}
+
+/* Fix focus states */
+.dark *:focus-visible {
+  outline-color: rgb(139, 92, 246) !important; /* violet-500 */
+}
+
+/* Fix notifications */
+.dark .notification {
+  background-color: rgb(30, 27, 75) !important; /* indigo-950 */
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Fix charts and visualizations */
+.dark .recharts-text {
+  fill: rgb(226, 232, 240) !important; /* slate-200 */
+}
+
+.dark .recharts-cartesian-grid-horizontal line,
+.dark .recharts-cartesian-grid-vertical line {
+  stroke: rgba(139, 92, 246, 0.3) !important; /* violet-500 with opacity */
+}
+
+.dark .recharts-tooltip-wrapper .recharts-default-tooltip {
+  background-color: rgb(30, 27, 75) !important; /* indigo-950 */
+  border-color: rgb(99, 102, 241) !important; /* indigo-500 */
+  color: rgb(248, 250, 252) !important; /* slate-50 */
+}
+
+/* Layout adjustments for main content area to not overlap with sidebar */
+.app-content {
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .app-content {
+    margin-left: 16rem; /* 256px = 64 * 4 (for Tailwind's rem-4 scale) */
+    width: calc(100% - 16rem);
+  }
+}
+
+/* Add this class to your main content container */
+.main-container {
+  min-height: calc(100vh - 64px - 56px); /* 100vh - header height - footer min-height */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ensure footer is always at the bottom */
+footer {
+  min-height: 56px;
+}
+
+/* Additional CSS to ensure consistency in dark mode */
+
+/* Ensure card headings are consistent */
+.dark h2,
+.dark .text-xl.font-semibold,
+.dark .text-2xl.font-semibold {
+  color: white !important;
+}
+
+/* Ensure secondary text is consistent */
+.dark .text-gray-500,
+.dark .text-gray-600,
+.dark .text-gray-400 {
+  color: rgb(156, 163, 175) !important; /* gray-400 */
+}
+
+/* Ensure all icons have the same style */
+.dark .text-indigo-600 {
+  color: rgb(129, 140, 248) !important; /* indigo-400 */
+}
+
+/* Ensure all card backgrounds have the same style */
+.dark .bg-white,
+.dark .bg-gray-50,
+.dark .bg-indigo-50 {
+  background-color: rgb(30, 41, 59) !important; /* slate-800 */
+}
+
+/* Fix inner card backgrounds */
+.dark .bg-white {
+  background-color: rgb(30, 41, 59) !important; /* slate-800 */
+}
+
+/* Fix icon backgrounds */
+.dark .bg-indigo-100 {
+  background-color: rgba(79, 70, 229, 0.2) !important; /* indigo-600 with opacity */
+}
+
+/* Fix focus mode background */
+.dark .dark\:bg-indigo-900\/20,
+.dark .dark\:bg-indigo-900\/30 {
+  background-color: rgb(30, 41, 59) !important; /* slate-800 */
+}
+
+/* Primary text */
+.dark .text-gray-900 {
+  color: white !important;
+}
+
+/* Fix form elements */
+.dark select,
+.dark input,
+.dark textarea {
+  background-color: rgb(51, 65, 85) !important; /* slate-700 */
+  color: white !important;
+  border-color: rgb(71, 85, 105) !important; /* slate-600 */
+}
+
+.dark select option {
+  background-color: rgb(51, 65, 85) !important; /* slate-700 */
+}
+
+/* Fix links */
+.dark a:not(.btn):not([class*="bg-"]) {
+  color: rgb(129, 140, 248) !important; /* indigo-400 */
+}
+
+.dark a:hover:not(.btn):not([class*="bg-"]) {
+  color: rgb(165, 180, 252) !important; /* indigo-300 */
+}

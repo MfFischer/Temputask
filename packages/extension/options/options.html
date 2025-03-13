@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tempu Task Extension Options</title>
+  <style>
+    /* Basic styles */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.5;
+      color: #333;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f9fafb;
+    }
+    
+    .header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    
+    .header img {
+      width: 48px;
+      height: 48px;
+      margin-right: 16px;
+    }
+    
+    h1 {
+      color: #4f46e5;
+      margin: 0;
+      font-size: 24px;
+    }
+    
+    .card {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    
+    h2 {
+      margin-top: 0;
+      margin-bottom: 16px;
+      font-size: 18px;
+      color: #111827;
+    }
+    
+    .form-group {
+      margin-bottom: 16px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    
+    input[type="text"], 
+    input[type="url"],
+    select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    
+    input[type="text"]:focus,
+    input[type="url"]:focus,
+    select:focus {
+      outline: none;
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+    }
+    
+    .switch-container {
+      display: flex;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    
+    .switch-label {
+      margin-left: 12px;
+    }
+    
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 26px;
+    }
+    
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 26px;
+    }
+    
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+      background-color: #10b981;
+    }
+    
+    input:focus + .slider {
+      box-shadow: 0 0 1px #10b981;
+    }
+    
+    input:checked + .slider:before {
+      transform: translateX(24px);
+    }
+    
+    .button-group {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 24px;
+      gap: 12px;
+    }
+    
+    button {
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .primary-button {
+      background-color: #4f46e5;
+      color: white;
+      border: none;
+    }
+    
+    .primary-button:hover {
+      background-color: #4338ca;
+    }
+    
+    .secondary-button {
+      background-color: #f3f4f6;
+      color: #4b5563;
+      border: 1px solid #d1d5db;
+    }
+    
+    .secondary-button:hover {
+      background-color: #e5e7eb;
+    }
+    
+    .danger-button {
+      background-color: #ef4444;
+      color: white;
+      border: none;
+    }
+    
+    .danger-button:hover {
+      background-color: #dc2626;
+    }
+    
+    .message {
+      padding: 12px 16px;
+      border-radius: 4px;
+      margin-bottom: 16px;
+    }
+    
+    .success {
+      background-color: #d1fae5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+    
+    .error {
+      background-color: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+    }
+    
+    .hidden {
+      display: none;
+    }
+    
+    .help-text {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+    
+    .domain-list {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      margin-top: 8px;
+    }
+    
+    .domain-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 12px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .domain-item:last-child {
+      border-bottom: none;
+    }
+    
+    .footer {
+      font-size: 12px;
+      color: #6b7280;
+      text-align: center;
+      margin-top: 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="../icons/icon48.png" alt="Tempu Task Logo">
+    <h1>Tempu Task Extension Options</h1>
+  </div>
+  
+  <div id="statusMessage" class="message hidden"></div>
+  
+  <div class="card">
+    <h2>Account Settings</h2>
+    
+    <div class="form-group">
+      <label for="userIdInput">User ID</label>
+      <input type="text" id="userIdInput" placeholder="Enter your user ID">
+    </div>
+    
+    <div class="form-group">
+      <label for="authTokenInput">Authentication Token</label>
+      <input type="text" id="authTokenInput" placeholder="Enter your auth token">
+      <p class="help-text">You can get these values from the Tempu Task web app under Settings → Extension Setup.</p>
+    </div>
+    
+    <div class="form-group">
+      <label for="apiUrlInput">API URL</label>
+      <input type="url" id="apiUrlInput" placeholder="Enter API URL">
+      <p class="help-text">Only change this if instructed by support.</p>
+    </div>
+    
+    <div class="form-group">
+      <label for="dashboardUrlInput">Dashboard URL</label>
+      <input type="url" id="dashboardUrlInput" placeholder="Enter dashboard URL">
+      <p class="help-text">The URL to open when clicking "Open Dashboard".</p>
+    </div>
+  </div>
+  
+  <div class="card">
+    <h2>Tracking Settings</h2>
+    
+    <div class="switch-container">
+        <label class="switch-container-label">
+          <span class="switch">
+            <input type="checkbox" id="enableTrackingCheckbox">
+            <span class="slider"></span>
+          </span>
+          <span class="switch-label">Enable site tracking</span>
+        </label>
+      </div>
+      
+      <div class="switch-container">
+        <label class="switch-container-label">
+          <span class="switch">
+            <input type="checkbox" id="trackIncognitoCheckbox">
+            <span class="slider"></span>
+          </span>
+          <span class="switch-label">Track in incognito mode</span>
+        </label>
+      </div>
+    
+    <div class="form-group">
+      <label for="syncIntervalSelect">Sync interval</label>
+      <select id="syncIntervalSelect">
+        <option value="1">Every minute</option>
+        <option value="5">Every 5 minutes</option>
+        <option value="15">Every 15 minutes</option>
+        <option value="30">Every 30 minutes</option>
+        <option value="60">Every hour</option>
+      </select>
+    </div>
+    
+    <div class="form-group">
+      <label for="idleThresholdSelect">Consider inactive after</label>
+      <select id="idleThresholdSelect">
+        <option value="60">1 minute</option>
+        <option value="180">3 minutes</option>
+        <option value="300">5 minutes</option>
+        <option value="600">10 minutes</option>
+      </select>
+    </div>
+  </div>
+  
+  <div class="card">
+    <h2>Domain Management</h2>
+    
+    <p>Add domains you don't want to track:</p>
+    
+    <div class="form-group">
+      <div class="input-with-button">
+        <input type="text" id="ignoreDomainInput" placeholder="e.g., facebook.com">
+        <button id="addIgnoreDomainBtn" class="secondary-button">Add</button>
+      </div>
+    </div>
+    
+    <div id="ignoredDomainsList" class="domain-list">
+      <!-- Ignored domains will be inserted here -->
+    </div>
+  </div>
+  
+  <div class="card">
+    <h2>Data Management</h2>
+    
+    <p>Manage the data collected by the extension:</p>
+    
+    <div class="button-group">
+      <button id="clearDataBtn" class="danger-button">Clear Cached Data</button>
+      <button id="exportDataBtn" class="secondary-button">Export Data</button>
+    </div>
+  </div>
+  
+  <div class="button-group">
+    <button id="restoreDefaultsBtn" class="secondary-button">Restore Defaults</button>
+    <button id="saveSettingsBtn" class="primary-button">Save Settings</button>
+  </div>
+  
+  <div class="footer">
+    <p>Tempu Task Extension v1.0.0</p>
+  </div>
+  
+  <script src="options.js"></script>
+</body>
+</html>

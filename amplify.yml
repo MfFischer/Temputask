@@ -1,0 +1,21 @@
+version: 1
+applications:
+  - frontend:
+      phases:
+        preBuild:
+          commands:
+            - npm install
+            - cd packages/shared && npm run build
+        build:
+          commands:
+            - cd packages/frontend && npm run build
+            - cd packages/frontend && npx next export
+      artifacts:
+        baseDirectory: packages/frontend/out
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - node_modules/**/*
+          - packages/frontend/node_modules/**/*
+          - packages/shared/node_modules/**/*

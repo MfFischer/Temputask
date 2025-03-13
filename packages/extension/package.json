@@ -1,0 +1,15 @@
+{
+    "name": "@tempos-ai/extension",
+    "version": "1.0.0",
+    "private": true,
+    "description": "Browser extension for tracking site activity with Tempu Task",
+    "scripts": {
+      "build": "mkdir -p dist && cp -r manifest.json background.js icons popup options dist/",
+      "package": "npm run build && cd dist && zip -r ../tempos-ai-extension.zip *",
+      "clean": "rm -rf dist tempos-ai-extension.zip"
+    },
+    "devDependencies": {
+      "eslint": "^8.46.0"
+    }
+  }
+  
