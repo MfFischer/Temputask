@@ -1,11 +1,11 @@
 {
-    "name": "temputask",
-    "private": true,
-    "workspaces": [
-      "packages/*"
-    ],
-    "scripts": {
-      "build": "npm run build --workspace=packages/shared && npm run build --workspace=packages/frontend",
-      "dev": "npm run dev --workspace=packages/frontend"
-    }
+  "name": "temputask-monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace=@tempos-ai/shared && npm run build --workspace=@tempos-ai/frontend",
+    "dev": "npm run dev --workspace=@tempos-ai/frontend"
   }
+}

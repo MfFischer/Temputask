@@ -5,11 +5,11 @@ applications:
         preBuild:
           commands:
             - npm ci
-            - cd packages/shared && npm ci && npm run build && cd ..
-            - cd frontend && npm ci
+            - cd packages/shared && npm ci && npm run build
+            - cd ../frontend && npm ci
         build:
           commands:
-            - cd packages/frontend && NODE_ENV=production npm run build
+            - cd packages/frontend && npm run build
       artifacts:
         baseDirectory: packages/frontend/.next
         files:
@@ -18,4 +18,3 @@ applications:
         paths:
           - node_modules/**/*
           - packages/*/node_modules/**/*
-          - packages/frontend/.next/cache/**/*
