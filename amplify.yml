@@ -22,6 +22,8 @@ applications:
             - echo "Building frontend"
             - cd packages/frontend
             - npm run build
+            - echo "Build completed"
+            - ls -la .next
       artifacts:
         baseDirectory: packages/frontend/.next
         files:
