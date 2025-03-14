@@ -5,15 +5,9 @@ applications:
         preBuild:
           commands:
             - npm install
-            - cd packages/shared && npm install && npm run build && cd ../..
-            - cd packages/frontend && npm install
         build:
           commands:
-            - cd packages/frontend
-            - npm run dev:restore
             - npm run build
-            - node enhance-static-export.js
-            - echo '[{"source":"/<*>","target":"/index.html","status":"200","condition":null}]' > out/rewrite-rules.json
       artifacts:
         baseDirectory: packages/frontend/out
         files:
