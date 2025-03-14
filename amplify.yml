@@ -4,40 +4,16 @@ applications:
       phases:
         preBuild:
           commands:
-            - echo "Starting preBuild phase"
             - npm install
             - cd packages/shared && npm install && npm run build && cd ../..
-            - cd packages/frontend && npm install && cd ../..
+            - cd packages/frontend && npm install
         build:
           commands:
-            - echo "Starting build phase"
             - cd packages/frontend
-            - export NEXT_PUBLIC_EXPORT=true
-            - export NODE_ENV=production
             - npm run dev:restore
             - npm run build
             - node enhance-static-export.js
-            - echo "Creating Amplify specific rewrites"
             - echo '[{"source":"/<*>","target":"/index.html","status":"200","condition":null}]' > out/rewrite-rules.json
-            - echo '{"rewrites":[{"source":"/<*>","target":"/index.html","status":"200"}]}' > out/rewrite-config.json
-            - echo '{"features":{"baseDirectory":".","redirects":true}}' > out/amplify.json
-            - echo "Creating additional redirect files"
-            - echo "/*    /index.html   200" > out/_redirects
-            - echo "Modifying index.html to use absolute paths"
-            - sed -i 's/src="\.\/_next\//src="\/_next\//g' out/index.html
-            - sed -i 's/href="\.\/_next\//href="\/_next\//g' out/index.html
-            - echo "Creating CSS file if missing"
-            - mkdir -p out/_next/static/css
-            - touch out/_next/static/css/main.css
-            - echo "Ensuring __NEXT_DATA__ exists in all HTML files"
-            - |
-              for htmlfile in $(find out -name "*.html"); do
-                if ! grep -q "__NEXT_DATA__" "$htmlfile"; then
-                  echo "Adding __NEXT_DATA__ to $htmlfile"
-                  sed -i 's|</head>|<script id="__NEXT_DATA__" type="application/json">{"props":{"pageProps":{}},"page":"/","query":{},"buildId":"static-export","assetPrefix":"","nextExport":true,"autoExport":true,"isFallback":false}</script></head>|g' "$htmlfile"
-                fi
-              done
-            - echo "Build completed"
       artifacts:
         baseDirectory: packages/frontend/out
         files:

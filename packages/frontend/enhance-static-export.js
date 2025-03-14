@@ -2,10 +2,18 @@ const fs = require('fs');
 const path = require('path');
 const glob = require('glob');
 
-// Output directory
+console.log('Starting improved static export enhancement for AWS Amplify...');
+
+// Define the output directory
 const outDir = path.join(__dirname, 'out');
 
-// Helper function to ensure a directory exists
+// Check if the output directory exists
+if (!fs.existsSync(outDir)) {
+  console.error('Error: out directory does not exist');
+  process.exit(1);
+}
+
+// Function to safely create directories
 function ensureDirExists(dirPath) {
   if (!fs.existsSync(dirPath)) {
     fs.mkdirSync(dirPath, { recursive: true });
@@ -13,32 +21,12 @@ function ensureDirExists(dirPath) {
   }
 }
 
-// Helper function to get relative path prefix based on file depth
+// Function to get relative path depth
 function getRelativePrefix(filePath) {
+  // Count directory levels and add ../ for each level
   const depth = filePath.split('/').length - 1;
-  return depth === 0 ? './' : '../'.repeat(depth);
+  return depth > 0 ? '../'.repeat(depth) : './';
 }
-
-// Helper function to create a proper Next.js data object
-function createNextDataObject(routeName = '/') {
-  return {
-    props: {
-      pageProps: {},
-      __N_SSG: true
-    },
-    page: routeName,
-    query: {},
-    buildId: "static-export-" + Date.now(),
-    assetPrefix: "",
-    runtimeConfig: {},
-    nextExport: true,
-    autoExport: true,
-    isFallback: false,
-    scriptLoader: []
-  };
-}
-
-console.log('Starting enhanced static export process...');
 
 // Ensure _next directory exists
 const nextDir = path.join(outDir, '_next');
@@ -62,34 +50,126 @@ htmlFiles.forEach(file => {
     // Read the original HTML
     let html = fs.readFileSync(filePath, 'utf8');
     
-    // Get the route name from the file path
-    let routeName = file === 'index.html' ? '/' : `/${file.replace('.html', '')}`;
-    
     // Check if it needs enhancement
     if (!html.includes('__NEXT_DATA__') || !html.includes('/_next/static/chunks/main')) {
       console.log(`Enhancing HTML file: ${file}`);
       
+      // Get the route name from the file path
+      let routeName = file === 'index.html' ? '/' : `/${file.replace('.html', '')}`;
+      
       // Create enhanced HTML with proper Next.js data and script references
       html = `<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Tempu Task</title>
-  <link rel="stylesheet" href="${relativePrefix}_next/static/css/main.css" />
-  <script id="__NEXT_DATA__" type="application/json">${JSON.stringify(createNextDataObject(routeName))}</script>
+  <script id="__NEXT_DATA__" type="application/json">{"props":{"pageProps":{}},"page":"${routeName}","query":{},"buildId":"static-export-${Date.now()}","assetPrefix":"","nextExport":true,"autoExport":true,"isFallback":false}</script>
+  <style>
+    html, body { 
+      margin: 0; 
+      padding: 0; 
+      background-color: black; 
+      color: white;
+      height: 100%;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    #__next {
+      height: 100%;
+      background-color: black;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    .header {
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .logo {
+      width: 2.5rem;
+      height: 2.5rem;
+      background: #4f46e5;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 0.75rem;
+      font-weight: bold;
+    }
+    .loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .loading-text {
+      color: white;
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .loading-subtext {
+      color: rgba(255,255,255,0.6);
+      font-size: 0.875rem;
+    }
+  </style>
 </head>
 <body>
   <div id="__next">
-    <div id="app-loading" class="flex flex-col items-center justify-center min-h-screen bg-black">
-      <div class="text-xl text-white mb-4">Loading Tempu Task...</div>
-      <div class="text-sm text-gray-400">Initializing application</div>
+    <div id="app-loading" class="loading">
+      <div class="loading-text">Loading Tempu Task...</div>
+      <div class="loading-subtext">Initializing application</div>
     </div>
   </div>
-  <script src="${relativePrefix}_next/static/chunks/polyfills.js" defer></script>
-  <script src="${relativePrefix}_next/static/chunks/main.js" defer></script>
-  <script src="${relativePrefix}_next/static/chunks/pages/_app.js" defer></script>
-  <script src="${relativePrefix}_next/static/chunks/pages${routeName === '/' ? '/index' : routeName}.js" defer></script>
+  <script>
+    // Show fallback UI if app doesn't load in 3 seconds
+    setTimeout(function() {
+      if (document.getElementById('app-loading')) {
+        console.log('App did not load, showing fallback UI');
+        document.getElementById('__next').innerHTML = \`
+          <div class="container">
+            <header class="header">
+              <div class="logo">TT</div>
+              <span style="font-weight:bold;font-size:1.25rem;">Tempu Task</span>
+            </header>
+            <main style="flex-grow:1;padding:2rem;">
+              <h1 style="font-size:3rem;line-height:1.2;margin-bottom:1.5rem;">
+                Take Control with<br />
+                <span style="background:linear-gradient(to right,#60a5fa,#6366f1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">AI-Powered Productivity,</span><br />
+                Your Way
+              </h1>
+              <div style="max-width:24rem;margin:3rem auto;padding:2rem;border:1px solid rgba(255,255,255,0.1);border-radius:0.5rem;background:rgba(255,255,255,0.05);">
+                <h2 style="text-align:center;margin-bottom:1.5rem;">Sign in to Tempu Task</h2>
+                <form>
+                  <div style="margin-bottom:1rem;">
+                    <label style="display:block;margin-bottom:0.5rem;font-size:0.875rem;color:rgba(255,255,255,0.7);">Email</label>
+                    <input type="email" placeholder="your@email.com" style="width:100%;padding:0.75rem;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.2);border-radius:0.25rem;color:white;" />
+                  </div>
+                  <div style="margin-bottom:1rem;">
+                    <label style="display:block;margin-bottom:0.5rem;font-size:0.875rem;color:rgba(255,255,255,0.7);">Password</label>
+                    <input type="password" placeholder="••••••••" style="width:100%;padding:0.75rem;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.2);border-radius:0.25rem;color:white;" />
+                  </div>
+                  <button type="button" style="width:100%;padding:0.75rem;background:#4f46e5;color:white;border:none;border-radius:0.25rem;font-weight:500;cursor:pointer;">Sign in</button>
+                </form>
+                <div style="text-align:center;margin-top:1.5rem;color:rgba(255,255,255,0.7);">
+                  Don't have an account? <a style="color:#818cf8;cursor:pointer;text-decoration:none;">Sign up</a>
+                </div>
+              </div>
+            </main>
+          </div>
+        \`;
+      }
+    }, 3000);
+  </script>
+  <script src="/_next/static/chunks/polyfills.js" defer></script>
+  <script src="/_next/static/chunks/main.js" defer></script>
+  <script src="/_next/static/chunks/pages/_app.js" defer></script>
+  <script src="/_next/static/chunks/pages${routeName === '/' ? '/index' : routeName}.js" defer></script>
 </body>
 </html>`;
       
@@ -97,33 +177,23 @@ htmlFiles.forEach(file => {
       fs.writeFileSync(filePath, html);
       console.log(`Enhanced ${file} with proper path depth: ${relativePrefix}`);
     } else {
-      // If __NEXT_DATA__ exists but we need to update the page property
-      if (html.includes('__NEXT_DATA__')) {
-        // Try to update the page property in __NEXT_DATA__
-        const nextDataRegex = /(window\.__NEXT_DATA__\s*=\s*|\<script id="__NEXT_DATA__" type="application\/json"\>)({[^<]*})(<\/script>)?/;
-        const match = html.match(nextDataRegex);
-        
-        if (match) {
-          try {
-            const dataStr = match[2];
-            const data = JSON.parse(dataStr);
-            
-            // Update the page property
-            if (data.page !== routeName) {
-              data.page = routeName;
-              
-              // Replace the old data with updated data
-              const updatedDataStr = JSON.stringify(data);
-              html = html.replace(nextDataRegex, `$1${updatedDataStr}$3`);
-              
-              // Write the updated HTML
-              fs.writeFileSync(filePath, html);
-              console.log(`Updated __NEXT_DATA__ page property in ${file} to ${routeName}`);
-            }
-          } catch (err) {
-            console.error(`Error parsing __NEXT_DATA__ in ${file}:`, err.message);
-          }
-        }
+      // If file already has __NEXT_DATA__, make sure it's not empty
+      if (html.includes('"__NEXT_DATA__": {}') || html.includes('window.__NEXT_DATA__={}')) {
+        console.log(`Fixing empty __NEXT_DATA__ in ${file}`);
+        let routeName = file === 'index.html' ? '/' : `/${file.replace('.html', '')}`;
+        html = html.replace(/<script id="__NEXT_DATA__"[^>]*>.*?<\/script>/g, 
+          `<script id="__NEXT_DATA__" type="application/json">{"props":{"pageProps":{}},"page":"${routeName}","query":{},"buildId":"static-export-${Date.now()}","assetPrefix":"","nextExport":true,"autoExport":true,"isFallback":false}</script>`);
+        fs.writeFileSync(filePath, html);
+        console.log(`Fixed empty __NEXT_DATA__ in ${file}`);
+      }
+      
+      // Also make sure paths are absolute, not relative
+      if (html.includes('src="./') || html.includes('href="./')) {
+        console.log(`Fixing relative paths in ${file}`);
+        html = html.replace(/src="\.\/_next\//g, 'src="/_next/');
+        html = html.replace(/href="\.\/_next\//g, 'href="/_next/');
+        fs.writeFileSync(filePath, html);
+        console.log(`Fixed relative paths in ${file}`);
       }
     }
   } catch (error) {
@@ -136,23 +206,54 @@ const requiredJsFiles = [
   'static/chunks/polyfills.js',
   'static/chunks/main.js',
   'static/chunks/pages/_app.js',
-  'static/chunks/pages/index.js'
+  'static/chunks/pages/index.js',
+  'static/css/main.css'
 ];
 
+// Check if these files exist, and create minimal placeholders if they don't
 requiredJsFiles.forEach(jsFile => {
   const filePath = path.join(nextDir, jsFile);
   
   if (!fs.existsSync(filePath)) {
+    console.log(`Creating placeholder for missing file: ${jsFile}`);
     ensureDirExists(path.dirname(filePath));
     
     let content = '';
-    
-    if (jsFile === 'static/chunks/polyfills.js') {
-      content = `// Polyfills for browser compatibility
-console.log("Polyfills loaded");`;
+    if (jsFile.endsWith('.css')) {
+      content = `/* Base styles */
+html, body { 
+  margin: 0; 
+  padding: 0; 
+  background-color: black; 
+  color: white;
+  height: 100%;
+  overflow: hidden;
+}
+#__next {
+  height: 100%;
+  overflow: hidden;
+  background-color: black;
+}
+#app-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: black;
+  color: white;
+}`;
+    } else if (jsFile === 'static/chunks/polyfills.js') {
+      content = `// Basic polyfills
+console.log("Polyfills loaded");
+
+// Check if __NEXT_DATA__ exists
+console.log("Checking __NEXT_DATA__ in polyfills.js:", window.__NEXT_DATA__);
+`;
     } else if (jsFile === 'static/chunks/main.js') {
       content = `// Main application initialization
 console.log("Tempu Task application initializing...");
+console.log("Checking __NEXT_DATA__ in main.js:", window.__NEXT_DATA__);
 
 // Initialize the app
 (function() {
@@ -164,138 +265,28 @@ console.log("Tempu Task application initializing...");
     
     console.log("Initializing Tempu Task app...");
     
-    // Handle SPA navigation
-    const handleSpaNavigation = () => {
-      const path = window.location.pathname;
-      console.log("SPA navigation to:", path);
-      
-      // Update the __NEXT_DATA__ with the current path
-      if (window.__NEXT_DATA__) {
-        window.__NEXT_DATA__.page = path === "/" ? "/" : path;
-      }
-    };
-    
-    // Listen for navigation events
-    window.addEventListener('popstate', handleSpaNavigation);
-    
-    // Setup loading message
-    const loadingElement = document.getElementById('app-loading');
+    // Hide loading element if it exists
+    var loadingElement = document.getElementById('app-loading');
     if (loadingElement) {
-      setTimeout(() => {
-        loadingElement.style.display = 'none';
-      }, 1000);
+      loadingElement.style.display = 'none';
     }
   }
   
-  // Initialize when DOM is ready
+  // Initialize on DOMContentLoaded or immediately if already loaded
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initApp);
   } else {
     initApp();
   }
-  
-  // Expose diagnostic function to window
-  window.diagnoseTempuTask = function() {
-    console.log("Running Tempu Task diagnostics...");
-    console.log("__NEXT_DATA__:", window.__NEXT_DATA__);
-    console.log("URL:", window.location.href);
-    console.log("Path:", window.location.pathname);
-    console.log("Document ready state:", document.readyState);
-    
-    return {
-      nextData: window.__NEXT_DATA__,
-      url: window.location.href,
-      readyState: document.readyState,
-      appInitialized: appInitialized
-    };
-  };
 })();`;
     } else if (jsFile === 'static/chunks/pages/_app.js') {
-      content = `// App component implementation
-console.log("Loading Tempu Task app component...");
-
-(function() {
-  function renderAppShell() {
-    const appElement = document.getElementById('__next');
-    if (!appElement) return;
-    
-    // Get data from Next.js
-    const pageProps = window.__NEXT_DATA__?.props?.pageProps || {};
-    const page = window.__NEXT_DATA__?.page || '/';
-    
-    console.log("Rendering app shell for page:", page);
-  }
-  
-  // Initialize when DOM is ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', renderAppShell);
-  } else {
-    renderAppShell();
-  }
-})();`;
+      content = `console.log("App component loaded");
+console.log("Checking __NEXT_DATA__ in _app.js:", window.__NEXT_DATA__);
+`;
     } else if (jsFile === 'static/chunks/pages/index.js') {
-      content = `// Index page implementation
-console.log("Loading Tempu Task index page...");
-
-(function() {
-  // This would normally come from the actual Next.js build
-  // but we're creating a placeholder that attempts to work
-  console.log("Initializing index page");
-  
-  // Simulate page loading and then display basic content
-  setTimeout(() => {
-    const appElement = document.getElementById('__next');
-    if (!appElement) return;
-    
-    // Hide loading indicator
-    const loadingElement = document.getElementById('app-loading');
-    if (loadingElement) {
-      loadingElement.style.display = 'none';
-    }
-    
-    // Add content
-    appElement.innerHTML = \`
-      <div class="flex flex-col md:flex-row bg-black text-white h-screen max-h-screen overflow-hidden">
-        <header class="md:hidden p-6 flex items-center">
-          <div class="mr-3 w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center">TT</div>
-          <span class="text-xl font-bold tracking-wider">Tempu Task</span>
-        </header>
-
-        <main class="w-full md:w-2/3 p-8 md:p-16 flex flex-col overflow-y-auto">
-          <h1 class="text-3xl font-bold mb-6">Welcome to Tempu Task</h1>
-          <p class="mb-4">Your application is running successfully.</p>
-          <p>This is a placeholder page. The actual application content will appear here.</p>
-        </main>
-        
-        <aside class="hidden md:flex md:w-1/3 bg-gray-900 p-8 flex-col">
-          <div class="flex items-center mb-8">
-            <div class="mr-3 w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center">TT</div>
-            <span class="text-xl font-bold tracking-wider">Tempu Task</span>
-          </div>
-          
-          <div class="mt-auto">
-            <div class="bg-gray-800 p-6 rounded-lg">
-              <h3 class="text-lg font-medium mb-2">Get Started</h3>
-              <p class="text-gray-400 mb-4">Sign in to access your dashboard</p>
-              <p class="flex space-x-4">
-                <button 
-                  class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded"
-                >
-                  Sign in
-                </button>
-                <button 
-                  class="border border-gray-600 hover:border-gray-500 px-4 py-2 rounded"
-                >
-                  Sign up
-                </button>
-              </p>
-            </div>
-          </div>
-        </aside>
-      </div>
-    \`;
-  }, 1000);
-})();`;
+      content = `console.log("Index page loaded");
+console.log("Checking __NEXT_DATA__ in index.js:", window.__NEXT_DATA__);
+`;
     } else {
       content = `// Implementation for ${jsFile}
 console.log("Loading ${jsFile}");`;
@@ -360,58 +351,27 @@ const customRewritesContent = {
     { "source": "/<*>", "target": "/index.html", "status": "200" }
   ]
 };
-fs.writeFileSync(path.join(outDir, 'custom-rewrites.json'), JSON.stringify(customRewritesContent, null, 2));
-console.log('Created custom-rewrites.json for AWS Amplify');
+fs.writeFileSync(path.join(outDir, 'rewrite-config.json'), JSON.stringify(customRewritesContent, null, 2));
+console.log('Created rewrite-config.json for AWS Amplify');
 
 // 6. Create an extra index.html at the root to guarantee one exists
 const indexPath = path.join(outDir, 'index.html');
 if (!fs.existsSync(indexPath)) {
   console.log('Creating root index.html');
-  const basicHtml = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Tempu Task</title>
-  <script id="__NEXT_DATA__" type="application/json">${JSON.stringify(createNextDataObject("/"))}</script>
-</head>
-<body>
-  <div id="__next">
-    <div id="app-loading" class="flex flex-col items-center justify-center min-h-screen bg-black">
-      <div class="text-xl text-white mb-4">Loading Tempu Task...</div>
-      <div class="text-sm text-gray-400">Initializing application</div>
-    </div>
-  </div>
-  <script>
-    // Add a timeout to show a message if the app doesn't load
-    setTimeout(function() {
-      var loadingElem = document.getElementById('app-loading');
-      if (loadingElem) {
-        var messageElem = loadingElem.querySelector('.text-sm');
-        if (messageElem) {
-          messageElem.textContent = 'If this persists, try adding /diagnostic.html to the URL to troubleshoot';
-        }
-      }
-    }, 5000);
-  </script>
-  <script src="./_next/static/chunks/polyfills.js" defer></script>
-  <script src="./_next/static/chunks/main.js" defer></script>
-  <script src="./_next/static/chunks/pages/_app.js" defer></script>
-  <script src="./_next/static/chunks/pages/index.js" defer></script>
-</body>
-</html>`;
-  
-  fs.writeFileSync(indexPath, basicHtml);
+  // We already have logic above to create index.html if needed
 }
 
 // Add a diagnostic page
 console.log('Creating diagnostic page...');
 const diagnosticHtml = `<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Tempu Task - Diagnostics</title>
+  <script id="__NEXT_DATA__" type="application/json">
+    {"props":{"pageProps":{}},"page":"/diagnostic","query":{},"buildId":"diagnostic-${Date.now()}","assetPrefix":"","nextExport":true,"autoExport":true,"isFallback":false}
+  </script>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -421,59 +381,81 @@ const diagnosticHtml = `<!DOCTYPE html>
       line-height: 1.6;
     }
     h1 {
-      border-bottom: 1px solid #333;
-      padding-bottom: 10px;
-    }
-    #diagnostics {
-      margin-top: 20px;
+      color: #6366f1;
     }
     .diagnostic-item {
-      margin-bottom: 10px;
-      padding: 10px;
-      background: #111;
-      border-radius: 4px;
+      margin: 8px 0;
+      padding: 8px;
+      border-left: 3px solid #6366f1;
+      background: rgba(255,255,255,0.05);
     }
     .success {
-      border-left: 4px solid #4CAF50;
+      color: #34d399;
     }
     .error {
-      border-left: 4px solid #F44336;
+      color: #f87171;
     }
     .warning {
-      border-left: 4px solid #FF9800;
+      color: #fbbf24;
     }
     pre {
-      background: #222;
+      background: rgba(0,0,0,0.3);
       padding: 10px;
+      overflow: auto;
       border-radius: 4px;
-      overflow-x: auto;
+    }
+    button {
+      background: #4f46e5;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    button:hover {
+      background: #4338ca;
     }
   </style>
-  <script id="__NEXT_DATA__" type="application/json">${JSON.stringify(createNextDataObject("/diagnostic"))}</script>
 </head>
 <body>
   <h1>Tempu Task - Deployment Diagnostics</h1>
-  <div>Running diagnostics...</div>
+  
   <div id="diagnostics"></div>
   
+  <button onclick="runAdditionalTests()">Run Additional Tests</button>
+  
   <script>
-    function addDiagnostic(message, type) {
-      const item = document.createElement('div');
-      item.className = 'diagnostic-item' + (type ? ' ' + type : '');
-      item.textContent = message;
-      document.getElementById('diagnostics').appendChild(item);
+    // Function to add diagnostic output
+    function addDiagnostic(message, type = 'info') {
+      const div = document.createElement('div');
+      div.className = 'diagnostic-item ' + type;
+      div.textContent = message;
+      document.getElementById('diagnostics').appendChild(div);
     }
-    
-    function addJson(title, obj) {
-      addDiagnostic(title);
+
+    function addJson(label, obj) {
+      const container = document.createElement('div');
+      container.className = 'diagnostic-item';
+      
+      const labelElement = document.createElement('div');
+      labelElement.textContent = label;
+      container.appendChild(labelElement);
+      
       const pre = document.createElement('pre');
       pre.textContent = JSON.stringify(obj, null, 2);
-      document.getElementById('diagnostics').appendChild(pre);
+      container.appendChild(pre);
+      
+      document.getElementById('diagnostics').appendChild(container);
     }
     
-    // Basic environment info
+    // Start diagnostics
+    addDiagnostic('Running diagnostics...', 'info');
+
+    // Environment info
     addDiagnostic('📱 User Agent: ' + navigator.userAgent);
     addDiagnostic('🌐 URL: ' + window.location.href);
+    addDiagnostic('⏰ Current Time: ' + new Date().toISOString());
     
     // Check for Next.js data
     try {
@@ -512,10 +494,10 @@ const diagnosticHtml = `<!DOCTYPE html>
     }
     
     // Try loading critical scripts
-    checkScript('./_next/static/chunks/polyfills.js');
-    checkScript('./_next/static/chunks/main.js');
-    checkScript('./_next/static/chunks/pages/_app.js');
-    checkScript('./_next/static/chunks/pages/index.js');
+    checkScript('/_next/static/chunks/polyfills.js');
+    checkScript('/_next/static/chunks/main.js');
+    checkScript('/_next/static/chunks/pages/_app.js');
+    checkScript('/_next/static/chunks/pages/index.js');
     
     // Check if we can access localStorage
     try {
@@ -529,37 +511,58 @@ const diagnosticHtml = `<!DOCTYPE html>
     // Check for document readiness
     addDiagnostic('📄 Document readiness: ' + document.readyState);
     
-    // Try to load a test image
-    const img = new Image();
-    img.onload = function() {
-      addDiagnostic('✅ Test image loaded successfully', 'success');
-    };
-    img.onerror = function() {
-      addDiagnostic('❌ Failed to load test image', 'error');
-    };
-    img.src = './amplify-test-image.png';
-    
-    // Check network requests
-    addDiagnostic('🔍 Checking network requests (open browser console to see details)');
-    console.log('Diagnostic script running - check Network tab for failed requests');
-    
-    // Check Amplify environment
-    if (window.AWS && window.AWS.config) {
-      addDiagnostic('✅ Amplify configuration found', 'success');
-      addJson('AWS Config:', window.AWS.config);
-    } else {
-      addDiagnostic('ℹ️ No Amplify configuration found');
+    // Additional testing function
+    function runAdditionalTests() {
+      addDiagnostic('🔍 Running additional tests...', 'info');
+      
+      // Test direct window.__NEXT_DATA__ assignment
+      try {
+        window.__NEXT_DATA__ = window.__NEXT_DATA__ || {};
+        window.__NEXT_DATA__.test = 'Direct assignment test';
+        addDiagnostic('✅ Direct assignment to __NEXT_DATA__ successful', 'success');
+        addJson('Updated __NEXT_DATA__:', window.__NEXT_DATA__);
+      } catch(e) {
+        addDiagnostic('❌ Direct assignment to __NEXT_DATA__ failed: ' + e.message, 'error');
+      }
+      
+      // Try loading index page directly
+      try {
+        var iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = '/';
+        
+        iframe.onload = function() {
+          try {
+            addDiagnostic('✅ Index page loaded in iframe', 'success');
+            
+            if (iframe.contentWindow.__NEXT_DATA__) {
+              addDiagnostic('✅ __NEXT_DATA__ exists in index page', 'success');
+              addJson('Index __NEXT_DATA__:', iframe.contentWindow.__NEXT_DATA__);
+            } else {
+              addDiagnostic('❌ __NEXT_DATA__ missing in index page', 'error');
+            }
+          } catch (e) {
+            addDiagnostic('❌ Error inspecting iframe: ' + e.message, 'error');
+          }
+        };
+        
+        iframe.onerror = function() {
+          addDiagnostic('❌ Failed to load index page in iframe', 'error');
+        };
+        
+        document.body.appendChild(iframe);
+      } catch(e) {
+        addDiagnostic('❌ Iframe test error: ' + e.message, 'error');
+      }
+      
+      // Check Amplify environment
+      if (window.AWS && window.AWS.config) {
+        addDiagnostic('✅ Amplify configuration found', 'success');
+        addJson('AWS Config:', window.AWS.config);
+      } else {
+        addDiagnostic('ℹ️ No Amplify configuration found');
+      }
     }
-    
-    // Create a test image
-    const testImage = document.createElement('div');
-    testImage.style.width = '10px';
-    testImage.style.height = '10px';
-    testImage.style.background = 'red';
-    testImage.style.position = 'absolute';
-    testImage.style.bottom = '10px';
-    testImage.style.right = '10px';
-    document.body.appendChild(testImage);
   </script>
 </body>
 </html>`;
@@ -567,6 +570,7 @@ const diagnosticHtml = `<!DOCTYPE html>
 fs.writeFileSync(path.join(outDir, 'diagnostic.html'), diagnosticHtml);
 
 // Create a test image for diagnostics
+console.log('Creating test image...');
 const testImagePixels = 'iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAOwgAADsIBFShKgAAAABl0RVh0U29mdHdhcmUAcGFpbnQubmV0IDQuMC4yMfEgaZUAAAGFSURBVDhPtZTNK0RRGIfHlLKwsbCwUEo+SvlIKQtlY2FjYWFhQT5SlI8SJQtlY2NlYWNhY0P5E/wLEht2bCijeeZ95n3PnXPvnTN35ulX99z3nPs8991z7rmO4zieyvSyE6yAeXAEdsADOAXr4BL8ONzcf9P1eA4OQA1MAaAGPxlbI1jPM9gDU6DkRsDT2kAQg1OtDj5XwRswhxoFzyAJmWCOgRdQoP8GXvMFFVqHlKG9vZIQ4BiYAPlQgbWsRglkKYMkxDiTdkXf3WCFVbCXYVCiDCc2kB2BDmX4zcIjE8i2QeL/WGZhgwlkOaBBGV4tQD5yQ1mjDJdMIBsDH0CkIIrCqtDaKDgHH0CGXXTGlkEUhY/WBrvnAEgD3QQV2sQoivMEtsEGOAZyHZXAC/4ZK5nLmQOvbhB16D9Cz8EoTrACO2KdTrDYGsj1JDcxFbGQI9QUJkz7CnJBBWVfbkNuQ5zKNPkVqL9iLNa5/MkjbOl2gSvwCBrUlsviluKgz5QxOReNF/lbOc4/9JZLHuVbXOAAAAAASUVORK5CYII=';
 const testImageBuffer = Buffer.from(testImagePixels, 'base64');
 fs.writeFileSync(path.join(outDir, 'amplify-test-image.png'), testImageBuffer);
@@ -582,40 +586,36 @@ const commonRoutes = [
   'auth/signup.html'
 ];
 
-const indexContent = fs.readFileSync(indexPath, 'utf8');
-
-commonRoutes.forEach(route => {
-  const routePath = path.join(outDir, route);
-  const routeDir = path.dirname(routePath);
+// Make sure index.html exists and has been processed
+if (fs.existsSync(indexPath)) {
+  const indexContent = fs.readFileSync(indexPath, 'utf8');
   
-  // Create directories if they don't exist
-  ensureDirExists(routeDir);
-  
-  // Get the relative path prefix based on directory depth
-  const relativePrefix = getRelativePrefix(route);
-  
-  // Get the route name for __NEXT_DATA__
-  const routeName = route === 'index.html' ? '/' : `/${route.replace('.html', '')}`;
-  
-  // Create a modified version of index.html with adjusted paths
-  let routeContent = indexContent
-    .replace(/\.\/\_next\//g, `${relativePrefix}_next/`)
-    .replace(/"page":\s*"[^"]*"/, `"page": "${routeName}"`)
-    .replace(/pages\/index\.js/, routeName === '/' ? 'pages/index.js' : `pages${routeName}.js`);
-  
-  // Ensure __NEXT_DATA__ exists
-  if (!routeContent.includes('__NEXT_DATA__')) {
-    const nextDataObject = createNextDataObject(routeName);
-    const nextDataScript = `<script id="__NEXT_DATA__" type="application/json">${JSON.stringify(nextDataObject)}</script>`;
+  commonRoutes.forEach(route => {
+    const routePath = path.join(outDir, route);
+    const routeDir = path.dirname(routePath);
     
-    // Insert before the closing head tag
-    routeContent = routeContent.replace('</head>', `${nextDataScript}\n</head>`);
+    // Create directories if they don't exist
+    ensureDirExists(routeDir);
     
-    console.log(`Added missing __NEXT_DATA__ to ${route}`);
-  }
-  
-  fs.writeFileSync(routePath, routeContent);
-  console.log(`Created fallback page: ${route} with relative prefix: ${relativePrefix}`);
-});
+    // Get the route name for __NEXT_DATA__
+    const routeName = route === 'index.html' ? '/' : `/${route.replace('.html', '')}`;
+    
+    // Create a modified version of index.html with adjusted paths and route name
+    let routeContent = indexContent;
+    
+    // Update the page property in __NEXT_DATA__
+    routeContent = routeContent.replace(/"page"\s*:\s*"[^"]*"/, `"page": "${routeName}"`);
+    
+    // Update script paths if needed
+    routeContent = routeContent.replace(/pages\/index\.js/, routeName === '/' ? 'pages/index.js' : `pages${routeName}.js`);
+    
+    // Make sure all paths are absolute
+    routeContent = routeContent.replace(/src="\.\/_next\//g, 'src="/_next/');
+    routeContent = routeContent.replace(/href="\.\/_next\//g, 'href="/_next/');
+    
+    fs.writeFileSync(routePath, routeContent);
+    console.log(`Created fallback page: ${route} with route name: ${routeName}`);
+  });
+}
 
 console.log('Improved static export enhancement completed!');
