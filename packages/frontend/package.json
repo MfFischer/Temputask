@@ -10,7 +10,8 @@
         "build": "cross-env NEXT_PUBLIC_EXPORT=true next build && node enhance-static-export.js",
         "build:debug": "cross-env NEXT_PUBLIC_EXPORT=true NODE_OPTIONS='--inspect' next build && node enhance-static-export.js",
         "start": "next start",
-        "lint": "next lint"
+        "lint": "next lint",
+        "verify-export": "node verify-static-export.js"
     },
     "dependencies": {
         "@heroicons/react": "^2.2.0",

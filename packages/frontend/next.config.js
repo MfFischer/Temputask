@@ -8,8 +8,9 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // Ensure trailingSlash is true for static export
-  trailingSlash: true,
+  // This is the key configuration to ignore API routes
+  // when using static export
+  pageExtensions: ['page.tsx', 'page.ts', 'page.jsx', 'page.js'],
   webpack: (config, { isServer }) => {
     if (!isServer) {
       // Don't attempt to import these modules on the client side
