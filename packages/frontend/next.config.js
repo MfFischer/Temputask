@@ -3,24 +3,13 @@ const path = require('path');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  
-  // Always use static export for production builds
-  ...(process.env.NODE_ENV === 'production' || process.env.NEXT_PUBLIC_EXPORT === 'true' ? {
-    output: 'export',
-    distDir: 'out',
-    images: {
-      unoptimized: true,
-    },
-    trailingSlash: true,
-    // Add this to ensure proper static HTML generation
-    generateStaticParams: true,
-  } : {
-    // Development settings (no static export)
-    images: {
-      domains: ['localhost'],
-    },
-  }),
-  
+  output: 'export',
+  distDir: 'out',
+  images: {
+    unoptimized: true,
+  },
+  // Ensure trailingSlash is true for static export
+  trailingSlash: true,
   webpack: (config, { isServer }) => {
     if (!isServer) {
       // Don't attempt to import these modules on the client side
