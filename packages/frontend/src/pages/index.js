@@ -8,8 +8,24 @@ import ReportsFeatureShowcase from '../components/common/ReportsFeatureShowcase'
 import { CheckCircleIcon } from '@heroicons/react/24/outline';
 
 export default function Home() {
+  // Get auth context at the top level
+  const authContext = useContext(AuthContext);
+  
+  // Client-side detection
+  const [isClient, setIsClient] = useState(false);
+  
+  // Form state
+  const [authMode, setAuthMode] = useState('login'); // 'login' or 'signup'
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  
   // Add useEffect for global styling
   useEffect(() => {
+    setIsClient(true);
+    
     // Apply styles to html and body to eliminate white space
     document.documentElement.style.backgroundColor = 'black';
     document.documentElement.style.overflow = 'hidden';
@@ -33,30 +49,6 @@ export default function Home() {
     };
   }, []);
 
-  const { user, isLoading, signIn, signUp } = useContext(AuthContext);
-
-  // Form state
-  const [authMode, setAuthMode] = useState('login'); // 'login' or 'signup'
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  // If loading, show loading indicator
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-black">
-        <div className="text-xl text-gray-300">Loading...</div>
-      </div>
-    );
-  }
-
-  // If user is logged in, redirect to /dashboard
-  if (user) {
-    return <Dashboard />;
-  }
-
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -64,6 +56,12 @@ export default function Home() {
     setError(null);
 
     try {
+      if (!authContext) {
+        throw new Error('Authentication context not available');
+      }
+      
+      const { signIn, signUp } = authContext;
+      
       if (authMode === 'login') {
         const { error } = await signIn(email, password);
         if (error) throw error;
@@ -83,6 +81,29 @@ export default function Home() {
       setLoading(false);
     }
   };
+
+  // If not client-side yet, show a minimal loading state
+  if (!isClient) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-black">
+        <div className="text-xl text-white">Loading Tempu Task...</div>
+      </div>
+    );
+  }
+
+  // If loading, show loading indicator
+  if (authContext?.isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-black">
+        <div className="text-xl text-gray-300">Loading...</div>
+      </div>
+    );
+  }
+
+  // If user is logged in, redirect to dashboard
+  if (authContext?.user) {
+    return <Dashboard />;
+  }
 
   return (
     <>
