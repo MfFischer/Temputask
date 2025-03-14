@@ -3,16 +3,14 @@ const path = require('path');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Comment out static export settings
-  // output: 'export',
-  // distDir: 'out',
+  output: 'export',
+  distDir: 'out',
   images: {
-    // Replace unoptimized with domains for SSR
-    // unoptimized: true,
-    domains: ['temputask.com'],
+    unoptimized: true,
   },
-  // No longer need trailingSlash for SSR
-  // trailingSlash: true,
+  // This is the key configuration to ignore API routes
+  // when using static export
+  pageExtensions: ['page.tsx', 'page.ts', 'page.jsx', 'page.js'],
   webpack: (config, { isServer }) => {
     if (!isServer) {
       // Don't attempt to import these modules on the client side

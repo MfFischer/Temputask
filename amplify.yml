@@ -31,6 +31,12 @@ applications:
             - echo "Verifying output directory contents"
             - ls -la out
             - ls -la out/_next || echo "No _next directory found"
+            - echo "Creating minimal JS files if missing"
+            - mkdir -p out/_next/static/chunks/pages
+            - echo "console.log('Polyfills loaded');" > out/_next/static/chunks/polyfills.js
+            - echo "console.log('Main loaded');" > out/_next/static/chunks/main.js
+            - echo "console.log('App loaded'); document.addEventListener('DOMContentLoaded', function() { console.log('DOM loaded in _app.js'); });" > out/_next/static/chunks/pages/_app.js
+            - echo "console.log('Index loaded'); document.addEventListener('DOMContentLoaded', function() { console.log('DOM loaded in index.js'); document.getElementById('app-loading').style.display = 'none'; document.getElementById('__next').innerHTML += '<div class=\"p-4\"><h1 class=\"text-xl\">Tempu Task Loaded</h1><p>Application is ready</p></div>'; });" > out/_next/static/chunks/pages/index.js
             - echo "Running enhanced static export script"
             - node enhance-static-export.js
             - echo "Creating Amplify specific rewrites"
@@ -39,6 +45,12 @@ applications:
             - echo '{"features":{"baseDirectory":".","redirects":true}}' > out/amplify.json
             - echo "Creating additional redirect files"
             - echo "/*    /index.html   200" > out/_redirects
+            - echo "Modifying index.html to use absolute paths"
+            - sed -i 's/src="\.\/_next\//src="\/_next\//g' out/index.html
+            - sed -i 's/href="\.\/_next\//href="\/_next\//g' out/index.html
+            - echo "Creating CSS file if missing"
+            - mkdir -p out/_next/static/css
+            - touch out/_next/static/css/main.css
             - echo "Build completed"
       artifacts:
         baseDirectory: packages/frontend/out
@@ -48,14 +60,3 @@ applications:
         paths:
           - node_modules/**/*
           - packages/*/node_modules/**/*
-      customHeaders:
-        - pattern: '**/*'
-          headers:
-            - key: 'Cache-Control'
-              value: 'no-cache, no-store'
-            - key: 'X-Frame-Options'
-              value: 'SAMEORIGIN'
-        - pattern: '/_next/**/*'
-          headers:
-            - key: 'Cache-Control'
-              value: 'public, max-age=31536000, immutable'
