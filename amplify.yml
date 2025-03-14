@@ -21,7 +21,8 @@ applications:
             - echo "Starting build phase"
             - echo "Building frontend"
             - cd packages/frontend
-            - npm run dev:restore && next build
+            - npm run dev:restore
+            - npx next build
             - echo "Listing output directory contents"
             - ls -la out
             - echo "Ensuring route HTML files exist"
