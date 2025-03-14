@@ -3,12 +3,14 @@
     "version": "0.1.0",
     "private": true,
     "scripts": {
-     "dev:setup": "node dev-script.js start",
-     "dev": "npm run dev:setup && next dev",
-     "dev:restore": "node dev-script.js restore",
-     "build": "npm run dev:restore && next build",
-     "start": "next start",
-     "lint": "next lint"
+        "dev": "next dev",
+        "dev:setup": "node dev-script.js start",
+        "dev:with-setup": "npm run dev:setup && next dev",
+        "dev:restore": "node dev-script.js restore",
+        "build": "npm run dev:restore && next build && npm run fix-static",
+        "fix-static": "cp out/index.html out/404.html && cp out/index.html out/dashboard.html && cp out/index.html out/projects.html && cp out/index.html out/companies.html && cp out/index.html out/settings.html",
+        "start": "next start",
+        "lint": "next lint"
     },
     "dependencies": {
       "@heroicons/react": "^2.2.0",

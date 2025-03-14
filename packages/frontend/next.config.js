@@ -3,14 +3,12 @@ const path = require('path');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  output: 'export',
-  distDir: 'out',
+  // Remove static export for development only
+  // output: 'export',
+  // distDir: 'out',
   images: {
-    unoptimized: true,
+    // No need for unoptimized in dev mode
   },
-  // This is the key configuration to ignore API routes
-  // when using static export
-  pageExtensions: ['page.tsx', 'page.ts', 'page.jsx', 'page.js'],
   webpack: (config, { isServer }) => {
     if (!isServer) {
       // Don't attempt to import these modules on the client side

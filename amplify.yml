@@ -22,8 +22,13 @@ applications:
             - echo "Building frontend"
             - cd packages/frontend
             - npm run build
+            - echo "Ensuring 404.html exists"
+            - cp out/404.html out/dashboard.html
+            - cp out/404.html out/projects.html
+            - cp out/404.html out/companies.html
+            - cp out/404.html out/settings.html
             - echo "Build completed"
-            - ls -la
+            - ls -la out
       artifacts:
         baseDirectory: packages/frontend/out
         files:
