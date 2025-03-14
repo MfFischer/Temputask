@@ -16,7 +16,7 @@ applications:
             - |
               if [ ! -f packages/frontend/out/index.html ]; then
                 echo "Creating index.html file"
-                cat > packages/frontend/out/index.html << 'EOL'
+                cat > packages/frontend/out/index.html << 'EOLINDEX'
                 <!DOCTYPE html>
                 <html lang="en">
                 <head>
@@ -32,13 +32,13 @@ applications:
                   <div id="__next"></div>
                 </body>
                 </html>
-                EOL
+                EOLINDEX
               fi
             - echo "Creating 404.html file"
             - cp packages/frontend/out/index.html packages/frontend/out/404.html || echo "Creating 404.html directly"
             - |
               if [ ! -f packages/frontend/out/404.html ]; then
-                cp packages/frontend/out/index.html packages/frontend/out/404.html 2>/dev/null || cat > packages/frontend/out/404.html << 'EOL'
+                cat > packages/frontend/out/404.html << 'EOL404'
                 <!DOCTYPE html>
                 <html lang="en">
                 <head>
@@ -54,7 +54,7 @@ applications:
                   <div id="__next"></div>
                 </body>
                 </html>
-                EOL
+                EOL404
               fi
             - echo "Creating Amplify rewrites configuration"
             - echo '[{"source":"/**","target":"/index.html","status":"200"}]' > packages/frontend/out/rewrite-rules.json
