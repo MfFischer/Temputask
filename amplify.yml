@@ -16,45 +16,41 @@ applications:
             - |
               if [ ! -f packages/frontend/out/index.html ]; then
                 echo "Creating index.html file"
-                cat > packages/frontend/out/index.html << 'EOLINDEX'
-                <!DOCTYPE html>
-                <html lang="en">
-                <head>
-                  <meta charset="utf-8" />
-                  <meta name="viewport" content="width=device-width, initial-scale=1" />
-                  <title>Tempu Task</title>
-                  <script id="__NEXT_DATA__" type="application/json">{"props":{"pageProps":{}},"page":"/","query":{},"buildId":"static-export","nextExport":true,"autoExport":true,"isFallback":false}</script>
-                  <script src="/_next/static/chunks/main.js" defer></script>
-                  <script src="/_next/static/chunks/pages/_app.js" defer></script>
-                  <script src="/_next/static/chunks/pages/index.js" defer></script>
-                </head>
-                <body>
-                  <div id="__next"></div>
-                </body>
-                </html>
-                EOLINDEX
+                echo '<!DOCTYPE html>' > packages/frontend/out/index.html
+                echo '<html lang="en">' >> packages/frontend/out/index.html
+                echo '<head>' >> packages/frontend/out/index.html
+                echo '  <meta charset="utf-8" />' >> packages/frontend/out/index.html
+                echo '  <meta name="viewport" content="width=device-width, initial-scale=1" />' >> packages/frontend/out/index.html
+                echo '  <title>Tempu Task</title>' >> packages/frontend/out/index.html
+                echo '  <script id="__NEXT_DATA__" type="application/json">{"props":{"pageProps":{}},"page":"/","query":{},"buildId":"static-export","nextExport":true,"autoExport":true,"isFallback":false}</script>' >> packages/frontend/out/index.html
+                echo '  <script src="/_next/static/chunks/main.js" defer></script>' >> packages/frontend/out/index.html
+                echo '  <script src="/_next/static/chunks/pages/_app.js" defer></script>' >> packages/frontend/out/index.html
+                echo '  <script src="/_next/static/chunks/pages/index.js" defer></script>' >> packages/frontend/out/index.html
+                echo '</head>' >> packages/frontend/out/index.html
+                echo '<body>' >> packages/frontend/out/index.html
+                echo '  <div id="__next"></div>' >> packages/frontend/out/index.html
+                echo '</body>' >> packages/frontend/out/index.html
+                echo '</html>' >> packages/frontend/out/index.html
               fi
             - echo "Creating 404.html file"
             - cp packages/frontend/out/index.html packages/frontend/out/404.html || echo "Creating 404.html directly"
             - |
               if [ ! -f packages/frontend/out/404.html ]; then
-                cat > packages/frontend/out/404.html << 'EOL404'
-                <!DOCTYPE html>
-                <html lang="en">
-                <head>
-                  <meta charset="utf-8" />
-                  <meta name="viewport" content="width=device-width, initial-scale=1" />
-                  <title>Tempu Task - Page Not Found</title>
-                  <script id="__NEXT_DATA__" type="application/json">{"props":{"pageProps":{}},"page":"/404","query":{},"buildId":"static-export","nextExport":true,"autoExport":true,"isFallback":false}</script>
-                  <script src="/_next/static/chunks/main.js" defer></script>
-                  <script src="/_next/static/chunks/pages/_app.js" defer></script>
-                  <script src="/_next/static/chunks/pages/index.js" defer></script>
-                </head>
-                <body>
-                  <div id="__next"></div>
-                </body>
-                </html>
-                EOL404
+                echo '<!DOCTYPE html>' > packages/frontend/out/404.html
+                echo '<html lang="en">' >> packages/frontend/out/404.html
+                echo '<head>' >> packages/frontend/out/404.html
+                echo '  <meta charset="utf-8" />' >> packages/frontend/out/404.html
+                echo '  <meta name="viewport" content="width=device-width, initial-scale=1" />' >> packages/frontend/out/404.html
+                echo '  <title>Tempu Task - Page Not Found</title>' >> packages/frontend/out/404.html
+                echo '  <script id="__NEXT_DATA__" type="application/json">{"props":{"pageProps":{}},"page":"/404","query":{},"buildId":"static-export","nextExport":true,"autoExport":true,"isFallback":false}</script>' >> packages/frontend/out/404.html
+                echo '  <script src="/_next/static/chunks/main.js" defer></script>' >> packages/frontend/out/404.html
+                echo '  <script src="/_next/static/chunks/pages/_app.js" defer></script>' >> packages/frontend/out/404.html
+                echo '  <script src="/_next/static/chunks/pages/index.js" defer></script>' >> packages/frontend/out/404.html
+                echo '</head>' >> packages/frontend/out/404.html
+                echo '<body>' >> packages/frontend/out/404.html
+                echo '  <div id="__next"></div>' >> packages/frontend/out/404.html
+                echo '</body>' >> packages/frontend/out/404.html
+                echo '</html>' >> packages/frontend/out/404.html
               fi
             - echo "Creating Amplify rewrites configuration"
             - echo '[{"source":"/**","target":"/index.html","status":"200"}]' > packages/frontend/out/rewrite-rules.json
