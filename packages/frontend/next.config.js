@@ -3,8 +3,11 @@ const path = require('path');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  output: 'export',
-  distDir: 'out',
+  // Conditionally use static export based on environment variable
+  ...(process.env.NEXT_PUBLIC_EXPORT === 'true' ? {
+    output: 'export',
+    distDir: 'out',
+  } : {}),
   images: {
     unoptimized: true,
   },
