@@ -10,51 +10,33 @@ applications:
             - echo "Current directory:"
             - pwd
             - ls -la
-            - echo "Installing root dependencies"
-            - npm ci
+            - echo "Installing root dependencies with npm install instead of npm ci"
+            - npm install
             - echo "Installing and building shared package"
-            - cd packages/shared && npm ci && npm run build && cd ../..
+            - cd packages/shared && npm install && npm run build && cd ../..
             - echo "Installing frontend dependencies"
-            - cd packages/frontend && npm ci && cd ../..
+            - cd packages/frontend && npm install && cd ../..
         build:
           commands:
             - echo "Starting build phase"
-            - echo "Building frontend"
             - cd packages/frontend
-            - npm run dev:restore
+            - echo "Setting environment variables"
             - export NEXT_PUBLIC_EXPORT=true
-            # Add this line to debug the build process
-            - echo "Next.js version:" && npx next --version
-            # Replace the build command with a more explicit one
-            - NODE_ENV=production npx next build
-            - echo "Checking if out directory exists"
-            - ls -la out
-            # Create a proper index.html if it doesn't exist or is empty
-            - |
-              if [ ! -s out/index.html ]; then
-                echo "Creating proper index.html"
-                echo '<!DOCTYPE html>
-                <html>
-                <head>
-                  <meta charset="utf-8" />
-                  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                  <title>Tempu Task</title>
-                  <link rel="stylesheet" href="/_next/static/css/app.css" />
-                  <script src="/_next/static/chunks/main.js" defer></script>
-                  <script src="/_next/static/chunks/pages/index.js" defer></script>
-                </head>
-                <body>
-                  <div id="__next"></div>
-                </body>
-                </html>' > out/index.html
-              fi
-            - cp out/index.html out/404.html || true
-            - cp out/404.html out/dashboard.html || true
-            - cp out/404.html out/projects.html || true
-            - cp out/404.html out/companies.html || true
-            - cp out/404.html out/settings.html || true
+            - export NODE_ENV=production
+            - echo "Running dev:restore"
+            - npm run dev:restore
+            - echo "Building Next.js application"
+            - npm run build
+            - echo "Creating fallback pages for direct navigation"
+            - mkdir -p out/auth
+            - cp out/index.html out/404.html
+            - cp out/index.html out/dashboard.html
+            - cp out/index.html out/projects.html
+            - cp out/index.html out/companies.html
+            - cp out/index.html out/settings.html
+            - cp out/index.html out/auth/login.html
+            - cp out/index.html out/auth/signup.html
             - echo "Build completed"
-            - ls -la out || echo "No out directory found"
       artifacts:
         baseDirectory: packages/frontend/out
         files:
