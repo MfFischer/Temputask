@@ -26,7 +26,10 @@ applications:
             - echo "Running dev:restore"
             - npm run dev:restore
             - echo "Building Next.js application"
-            - npm run build || echo "Next.js build failed, continuing with fallback"
+            - npm run build
+            - echo "Verifying output directory contents"
+            - ls -la out
+            - ls -la out/_next || echo "No _next directory found"
             - echo "Running enhance-static-export script"
             - node enhance-static-export.js
             - echo "Creating fallback pages for direct navigation"
@@ -38,6 +41,8 @@ applications:
             - cp out/index.html out/settings.html || echo "settings.html creation failed"
             - cp out/index.html out/auth/login.html || echo "login.html creation failed"
             - cp out/index.html out/auth/signup.html || echo "signup.html creation failed"
+            - echo "Creating Amplify redirects"
+            - echo '[{"source":"/<*>","target":"/index.html","status":"200"}]' > out/rewrite-rules.json
             - echo "Build completed"
       artifacts:
         baseDirectory: packages/frontend/out
