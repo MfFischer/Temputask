@@ -42,7 +42,9 @@ applications:
             - cp out/index.html out/auth/login.html || echo "login.html creation failed"
             - cp out/index.html out/auth/signup.html || echo "signup.html creation failed"
             - echo "Creating Amplify redirects"
-            - echo '[{"source":"/<*>","target":"/index.html","status":"200"}]' > out/rewrite-rules.json
+            - echo '[{"source":"/<*>","target":"/index.html","status":"200","condition":null}]' > out/rewrite-rules.json
+            - echo "Creating additional redirect formats"
+            - echo '{"rewrites":[{"source":"/<*>","target":"/index.html","status":"200"}]}' > out/rewrite-config.json
             - echo "Build completed"
       artifacts:
         baseDirectory: packages/frontend/out
