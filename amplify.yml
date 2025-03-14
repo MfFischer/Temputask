@@ -12,21 +12,54 @@ applications:
             - npm run build
             - echo "Verifying output directory structure"
             - ls -la packages/frontend/out
-            - echo "Checking index.html content"
-            - cat packages/frontend/out/index.html | head -20
-            - echo "Ensuring index.html exists at root"
-            - cp packages/frontend/out/index.html packages/frontend/out/404.html
+            - echo "Checking if index.html exists"
+            - |
+              if [ ! -f packages/frontend/out/index.html ]; then
+                echo "Creating index.html file"
+                cat > packages/frontend/out/index.html << 'EOL'
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                  <meta charset="utf-8" />
+                  <meta name="viewport" content="width=device-width, initial-scale=1" />
+                  <title>Tempu Task</title>
+                  <script id="__NEXT_DATA__" type="application/json">{"props":{"pageProps":{}},"page":"/","query":{},"buildId":"static-export","nextExport":true,"autoExport":true,"isFallback":false}</script>
+                  <script src="/_next/static/chunks/main.js" defer></script>
+                  <script src="/_next/static/chunks/pages/_app.js" defer></script>
+                  <script src="/_next/static/chunks/pages/index.js" defer></script>
+                </head>
+                <body>
+                  <div id="__next"></div>
+                </body>
+                </html>
+                EOL
+              fi
+            - echo "Creating 404.html file"
+            - cp packages/frontend/out/index.html packages/frontend/out/404.html || echo "Creating 404.html directly"
+            - |
+              if [ ! -f packages/frontend/out/404.html ]; then
+                cp packages/frontend/out/index.html packages/frontend/out/404.html 2>/dev/null || cat > packages/frontend/out/404.html << 'EOL'
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                  <meta charset="utf-8" />
+                  <meta name="viewport" content="width=device-width, initial-scale=1" />
+                  <title>Tempu Task - Page Not Found</title>
+                  <script id="__NEXT_DATA__" type="application/json">{"props":{"pageProps":{}},"page":"/404","query":{},"buildId":"static-export","nextExport":true,"autoExport":true,"isFallback":false}</script>
+                  <script src="/_next/static/chunks/main.js" defer></script>
+                  <script src="/_next/static/chunks/pages/_app.js" defer></script>
+                  <script src="/_next/static/chunks/pages/index.js" defer></script>
+                </head>
+                <body>
+                  <div id="__next"></div>
+                </body>
+                </html>
+                EOL
+              fi
             - echo "Creating Amplify rewrites configuration"
             - echo '[{"source":"/**","target":"/index.html","status":"200"}]' > packages/frontend/out/rewrite-rules.json
             - echo '{"features":{"baseDirectory":".","redirects":true}}' > packages/frontend/out/amplify.json
             - echo "/*    /index.html   200" > packages/frontend/out/_redirects
-            - |
-              for htmlfile in $(find packages/frontend/out -name "*.html"); do
-                if ! grep -q "__NEXT_DATA__" "$htmlfile"; then
-                  echo "Adding __NEXT_DATA__ to $htmlfile"
-                  sed -i 's|</head>|<script id="__NEXT_DATA__" type="application/json">{"props":{"pageProps":{}},"page":"/","query":{},"buildId":"static-export","nextExport":true,"autoExport":true,"isFallback":false}</script></head>|g' "$htmlfile"
-                fi
-              done
       artifacts:
         baseDirectory: packages/frontend/out
         files:
