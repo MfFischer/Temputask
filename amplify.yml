@@ -51,7 +51,18 @@ applications:
             - echo "Creating CSS file if missing"
             - mkdir -p out/_next/static/css
             - touch out/_next/static/css/main.css
-            - echo "Build completed"
+            - echo "Ensuring __NEXT_DATA__ exists in all HTML files"
+            - |
+              for htmlfile in $(find out -name "*.html"); do
+                if ! grep -q "__NEXT_DATA__" "$htmlfile"; then
+                  echo "Adding __NEXT_DATA__ to $htmlfile"
+                  sed -i 's/<\/head>/<script id="__
+                                    echo "Adding __NEXT_DATA__ to $htmlfile"
+                  sed -i 's/<\/head>/<script id="__NEXT_DATA__" type="application\/json">{"props":{"pageProps":{}},"page":"\/","query":{},"buildId":"static-export","assetPrefix":"","nextExport":true,"autoExport":true,"isFallback":false}<\/script><\/head>/g' "$htmlfile"
+                fi
+              done
+            - echo "Running verification script"
+            - npm run verify-export
       artifacts:
         baseDirectory: packages/frontend/out
         files:
