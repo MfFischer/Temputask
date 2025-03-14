@@ -33,8 +33,7 @@ applications:
             - |
               if [ ! -s out/index.html ]; then
                 echo "Creating proper index.html"
-                cat > out/index.html << 'EOL'
-                <!DOCTYPE html>
+                echo '<!DOCTYPE html>
                 <html>
                 <head>
                   <meta charset="utf-8" />
@@ -47,8 +46,7 @@ applications:
                 <body>
                   <div id="__next"></div>
                 </body>
-                </html>
-                EOL
+                </html>' > out/index.html
               fi
             - cp out/index.html out/404.html || true
             - cp out/404.html out/dashboard.html || true
