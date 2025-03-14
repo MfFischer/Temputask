@@ -1,15 +1,17 @@
 import { useState, useEffect, useContext } from 'react';
+import { useSupabaseClient } from '@supabase/auth-helpers-react';
 import { AuthContext } from '../contexts/AuthContext';
 
 export const useCompanies = () => {
   const { user } = useContext(AuthContext);
+  const supabase = useSupabaseClient();
   const [companies, setCompanies] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [companyProjects, setCompanyProjects] = useState({});
   const [isLoadingProjects, setIsLoadingProjects] = useState(false);
 
-  // Fetch companies on component mount or when user changes
+  // Fetch companies directly from Supabase on component mount or when user changes
   useEffect(() => {
     if (user) {
       fetchCompanies();
@@ -19,7 +21,7 @@ export const useCompanies = () => {
     }
   }, [user]);
 
-  // Fetch all companies
+  // Fetch all companies directly from Supabase
   const fetchCompanies = async () => {
     if (!user) return;
     
@@ -27,21 +29,34 @@ export const useCompanies = () => {
     setError(null);
     
     try {
-      const timestamp = new Date().getTime();
-      const response = await fetch(`/api/companies/getCompanies?_t=${timestamp}`, {
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache'
-        }
-      });
+      // Get all companies for the authenticated user
+      const { data, error: companiesError } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('name', { ascending: true });
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to fetch companies');
+      if (companiesError) {
+        throw new Error(companiesError.message || 'Failed to fetch companies');
       }
       
-      const data = await response.json();
-      setCompanies(data.companies || []);
+      // For each company, get the count of associated projects
+      const companiesWithProjectCounts = await Promise.all(
+        data.map(async (company) => {
+          const { count, error: countError } = await supabase
+            .from('projects')
+            .select('id', { count: 'exact', head: true })
+            .eq('company_id', company.id)
+            .eq('user_id', user.id);
+          
+          return {
+            ...company,
+            project_count: countError ? 0 : count || 0
+          };
+        })
+      );
+      
+      setCompanies(companiesWithProjectCounts || []);
     } catch (err) {
       console.error('Error fetching companies:', err);
       setError('Failed to load companies');
@@ -50,34 +65,53 @@ export const useCompanies = () => {
     }
   };
 
-  // Fetch projects for a specific company
+  // Fetch projects for a specific company directly from Supabase
   const fetchCompanyProjects = async (companyId) => {
     if (!user || !companyId) return [];
     
     setIsLoadingProjects(true);
     
     try {
-      const timestamp = new Date().getTime();
-      const response = await fetch(`/api/projects/getProjects?company_id=${companyId}&stats=true&_t=${timestamp}`, {
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache'
-        }
-      });
+      // Get projects with stats
+      const { data: projectsData, error: projectsError } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('company_id', companyId);
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to fetch company projects');
+      if (projectsError) {
+        throw new Error(projectsError.message || 'Failed to fetch company projects');
       }
       
-      const data = await response.json();
+      // Get time entries stats for each project
+      const projectsWithStats = await Promise.all(
+        projectsData.map(async (project) => {
+          // Get the total time for this project
+          const { data: timeEntries, error: timeError } = await supabase
+            .from('time_entries')
+            .select('duration')
+            .eq('project_id', project.id)
+            .eq('user_id', user.id)
+            .not('duration', 'is', null);
+          
+          const totalTime = timeError ? 0 : 
+            timeEntries.reduce((sum, entry) => sum + (entry.duration || 0), 0);
+          
+          return {
+            ...project,
+            stats: {
+              totalTime
+            }
+          };
+        })
+      );
       
       setCompanyProjects(prev => ({
         ...prev,
-        [companyId]: data.projects || []
+        [companyId]: projectsWithStats || []
       }));
       
-      return data.projects || [];
+      return projectsWithStats || [];
     } catch (err) {
       console.error(`Error fetching projects for company ${companyId}:`, err);
       return [];
@@ -86,28 +120,31 @@ export const useCompanies = () => {
     }
   };
 
-  // Create a new company
+  // Create a new company directly with Supabase
   const createCompany = async (companyData) => {
     if (!user) return null;
     
     try {
-      const response = await fetch('/api/companies/createCompany', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(companyData),
-      });
+      // Add user_id to company data
+      const newCompanyData = {
+        ...companyData,
+        user_id: user.id,
+        created_at: new Date().toISOString()
+      };
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create company');
+      // Insert into Supabase
+      const { data, error } = await supabase
+        .from('companies')
+        .insert(newCompanyData)
+        .select()
+        .single();
+      
+      if (error) {
+        throw new Error(error.message || 'Failed to create company');
       }
       
-      const { company } = await response.json();
-      
       const newCompany = {
-        ...company,
+        ...data,
         project_count: 0
       };
       
@@ -121,33 +158,28 @@ export const useCompanies = () => {
     }
   };
 
-  // Update an existing company
+  // Update an existing company directly with Supabase
   const updateCompany = async (companyId, updates) => {
     if (!user) return null;
     
     try {
-      const response = await fetch('/api/companies/updateCompany', {
-        method: 'POST', // Changed from PATCH to POST to match API endpoint
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          id: companyId, // Changed from company_id to id to match API expectations
-          ...updates 
-        }),
-      });
+      // Update in Supabase
+      const { data, error } = await supabase
+        .from('companies')
+        .update(updates)
+        .eq('id', companyId)
+        .eq('user_id', user.id)
+        .select()
+        .single();
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update company');
+      if (error) {
+        throw new Error(error.message || 'Failed to update company');
       }
-      
-      const { company } = await response.json();
       
       // Preserve project_count when updating
       const existingCompany = companies.find(c => c.id === companyId);
       const updatedCompany = {
-        ...company,
+        ...data,
         project_count: existingCompany ? existingCompany.project_count : 0
       };
       
@@ -164,22 +196,20 @@ export const useCompanies = () => {
     }
   };
 
-  // Delete a company
+  // Delete a company directly with Supabase
   const deleteCompany = async (companyId) => {
     if (!user) return false;
     
     try {
-      const response = await fetch('/api/companies/deleteCompany', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ company_id: companyId }),
-      });
+      // Delete from Supabase
+      const { error } = await supabase
+        .from('companies')
+        .delete()
+        .eq('id', companyId)
+        .eq('user_id', user.id);
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete company');
+      if (error) {
+        throw new Error(error.message || 'Failed to delete company');
       }
       
       // Update local state

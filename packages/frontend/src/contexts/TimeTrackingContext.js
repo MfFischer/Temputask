@@ -27,17 +27,20 @@ export function TimeTrackingProvider({ children }) {
   const supabase = useSupabaseClient();
   const user = useUser();
 
-  // Load projects on mount
+  // Load projects directly from Supabase instead of API route
   useEffect(() => {
     if (!user) return;
 
     async function loadProjects() {
       try {
-        const response = await fetch('/api/timeTracking/getProjects');
-        const data = await response.json();
+        // Direct Supabase query instead of API route
+        const { data, error: projectsError } = await supabase
+          .from('projects')
+          .select('id, name, description, color, company_id')
+          .eq('user_id', user.id);
         
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to load projects');
+        if (projectsError) {
+          throw new Error(projectsError.message || 'Failed to load projects');
         }
         
         setProjects(data || []);
@@ -47,9 +50,9 @@ export function TimeTrackingProvider({ children }) {
     }
 
     loadProjects();
-  }, [user]);
+  }, [user, supabase]);
 
-  // Load time entries for today
+  // Load time entries for today directly from Supabase
   useEffect(() => {
     if (!user) return;
     
@@ -57,15 +60,20 @@ export function TimeTrackingProvider({ children }) {
       setIsLoading(true);
       
       try {
-        // Check for active timer
-        const response = await fetch('/api/timeTracking/getActiveTimer');
-        const data = await response.json();
+        // Check for active timer directly with Supabase
+        const { data: activeTimerData, error: activeTimerError } = await supabase
+          .from('time_entries')
+          .select('*')
+          .eq('user_id', user.id)
+          .is('end_time', null)
+          .order('start_time', { ascending: false })
+          .limit(1)
+          .single();
         
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to fetch active timer');
+        if (activeTimerError && activeTimerError.code !== 'PGRST116') {
+          // PGRST116 is the error code for "no rows returned" which is expected if no active timer
+          throw new Error(activeTimerError.message || 'Failed to fetch active timer');
         }
-        
-        const activeTimerData = data.activeTimer;
         
         if (activeTimerData) {
           console.log('Found active timer:', activeTimerData);
@@ -106,16 +114,22 @@ export function TimeTrackingProvider({ children }) {
           setIsPaused(false);
         }
 
-        // Get today's entries from API
-        const entriesResponse = await fetch('/api/timeTracking/getTimeEntries');
-        const entriesData = await entriesResponse.json();
+        // Get today's entries from Supabase
+        const startOfDay = getStartOfDay(new Date()).toISOString();
         
-        if (!entriesResponse.ok) {
-          throw new Error(entriesData.error || 'Failed to fetch time entries');
+        const { data: entriesData, error: entriesError } = await supabase
+          .from('time_entries')
+          .select('*')
+          .eq('user_id', user.id)
+          .gte('start_time', startOfDay)
+          .order('start_time', { ascending: false });
+        
+        if (entriesError) {
+          throw new Error(entriesError.message || 'Failed to fetch time entries');
         }
 
-        setTimeEntries(entriesData.timeEntries || []);
-        calculateSummary(entriesData.timeEntries || []);
+        setTimeEntries(entriesData || []);
+        calculateSummary(entriesData || []);
       } catch (err) {
         console.error('Error loading time entries:', err);
         setError('Failed to load time entries');
@@ -188,7 +202,7 @@ export function TimeTrackingProvider({ children }) {
     setSummary(summary);
   };
 
-  // Start a new timer
+  // Start a new timer directly with Supabase
   const startTimer = async (projectId, category, description = '', withFocus = false, focusMinutes = 25) => {
     if (!user) return null;
     
@@ -199,29 +213,29 @@ export function TimeTrackingProvider({ children }) {
       const effectiveCategory = withFocus ? 'Focus' : category;
       const effectiveDescription = withFocus ? `Focus Session (${focusMinutes} min)` : description;
       
-      const response = await fetch('/api/timeTracking/startTimer', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const now = new Date();
+      
+      // Insert the time entry directly with Supabase
+      const { data, error } = await supabase
+        .from('time_entries')
+        .insert({
+          user_id: user.id,
           project_id: projectId,
           category: effectiveCategory,
           description: effectiveDescription,
-          duration_minutes: withFocus ? focusMinutes : null
-        }),
-      });
-
-      const responseData = await response.json();
+          start_time: now.toISOString(),
+        })
+        .select()
+        .single();
       
-      if (!response.ok) {
-        throw new Error(responseData.error || 'Failed to start timer');
+      if (error) {
+        throw new Error(error.message || 'Failed to start timer');
       }
 
-      console.log('Timer started successfully:', responseData.data);
+      console.log('Timer started successfully:', data);
       
       // Store the timer data
-      setActiveTimer(responseData.data);
+      setActiveTimer(data);
       
       // If focus mode was requested, set up focus states
       if (withFocus) {
@@ -230,7 +244,6 @@ export function TimeTrackingProvider({ children }) {
         setIsPaused(false);
         
         // Calculate when focus session should end
-        const now = new Date();
         const endTime = new Date(now.getTime() + focusMinutes * 60 * 1000);
         setFocusEndTime(endTime);
         
@@ -240,7 +253,7 @@ export function TimeTrackingProvider({ children }) {
         setFocusEndTime(null);
       }
       
-      return responseData.data;
+      return data;
     } catch (err) {
       console.error('Error starting timer:', err);
       setError('Failed to start timer');
@@ -253,36 +266,39 @@ export function TimeTrackingProvider({ children }) {
     return startTimer(projectId, 'Focus', description, true, durationMinutes);
   };
 
-  // Stop the active timer
+  // Stop the active timer directly with Supabase
   const stopTimer = async () => {
     if (!user || !activeTimer) return null;
     
     console.log('Stopping timer with ID:', activeTimer.id);
     
     try {
-      const response = await fetch('/api/timeTracking/stopTimer', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          entry_id: activeTimer.id,
-        }),
-      });
-
-      const responseData = await response.json();
+      const now = new Date();
+      const startTime = new Date(activeTimer.start_time);
+      const duration = Math.round((now - startTime) / 1000); // duration in seconds
       
-      if (!response.ok) {
-        throw new Error(responseData.error || 'Failed to stop timer');
+      // Update the time entry directly with Supabase
+      const { data, error } = await supabase
+        .from('time_entries')
+        .update({
+          end_time: now.toISOString(),
+          duration: duration
+        })
+        .eq('id', activeTimer.id)
+        .select()
+        .single();
+      
+      if (error) {
+        throw new Error(error.message || 'Failed to stop timer');
       }
 
-      console.log('Timer stopped successfully:', responseData.data);
+      console.log('Timer stopped successfully:', data);
       setActiveTimer(null);
       setFocusMode(false);
       setFocusEndTime(null);
       setIsPaused(false);
       
-      return responseData.data;
+      return data;
     } catch (err) {
       console.error('Error stopping timer:', err);
       setError('Failed to stop timer');
@@ -308,30 +324,35 @@ export function TimeTrackingProvider({ children }) {
     return false;
   };
 
-  // Log a distraction
+  // Log a distraction directly with Supabase
   const logDistraction = async (description, durationMinutes) => {
     if (!user) return null;
     
     try {
-      const response = await fetch('/api/timeTracking/logDistraction', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          description,
-          duration_minutes: durationMinutes,
-        }),
-      });
-
-      const responseData = await response.json();
+      const now = new Date();
+      const startTime = new Date(now.getTime() - (durationMinutes * 60 * 1000));
+      const duration = durationMinutes * 60; // convert to seconds
       
-      if (!response.ok) {
-        throw new Error(responseData.error || 'Failed to log distraction');
+      // Insert the distraction entry directly with Supabase
+      const { data, error } = await supabase
+        .from('time_entries')
+        .insert({
+          user_id: user.id,
+          category: 'Distraction',
+          description: description,
+          start_time: startTime.toISOString(),
+          end_time: now.toISOString(),
+          duration: duration
+        })
+        .select()
+        .single();
+      
+      if (error) {
+        throw new Error(error.message || 'Failed to log distraction');
       }
 
       setDistractionCount(prev => prev + 1);
-      return responseData.data;
+      return data;
     } catch (err) {
       console.error('Error logging distraction:', err);
       setError('Failed to log distraction');
