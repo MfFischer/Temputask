@@ -22,17 +22,20 @@ applications:
             - echo "Building frontend"
             - cd packages/frontend
             - npm run dev:restore
+            - export NEXT_PUBLIC_EXPORT=true
             - npx next build
-            - echo "Listing output directory contents"
-            - ls -la out
-            - echo "Ensuring route HTML files exist"
-            - touch out/404.html
+            - echo "Checking if out directory exists"
+            - ls -la
+            - echo "Creating index.html if it doesn't exist"
+            - mkdir -p out
+            - touch out/index.html
+            - cp out/index.html out/404.html || true
             - cp out/404.html out/dashboard.html || true
             - cp out/404.html out/projects.html || true
             - cp out/404.html out/companies.html || true
             - cp out/404.html out/settings.html || true
             - echo "Build completed"
-            - ls -la out
+            - ls -la out || echo "No out directory found"
       artifacts:
         baseDirectory: packages/frontend/out
         files:

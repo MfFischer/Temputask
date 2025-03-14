@@ -1,8 +1,7 @@
 import React, { useMemo } from 'react';
 import Card from '../common/Card';
-import { SwitchHorizontalIcon, ExclamationCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { SwitchHorizontalIcon, ExclamationCircleIcon, ArrowPathIcon, ArrowsRightLeftIcon } from '@heroicons/react/24/outline';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-
 // Analyze context switching patterns
 const analyzeContextSwitching = (timeEntries) => {
   if (!timeEntries || timeEntries.length === 0) return { 
