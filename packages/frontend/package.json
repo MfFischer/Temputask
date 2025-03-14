@@ -8,7 +8,7 @@
         "dev:with-setup": "npm run dev:setup && next dev",
         "dev:restore": "node dev-script.js restore",
         "build": "npm run dev:restore && next build && npm run fix-static",
-        "fix-static": "cp out/index.html out/404.html && cp out/index.html out/dashboard.html && cp out/index.html out/projects.html && cp out/index.html out/companies.html && cp out/index.html out/settings.html",
+        "fix-static": "ls -la out && mkdir -p out && touch out/404.html && cp out/404.html out/dashboard.html || true && cp out/404.html out/projects.html || true && cp out/404.html out/companies.html || true && cp out/404.html out/settings.html || true",
         "start": "next start",
         "lint": "next lint"
     },

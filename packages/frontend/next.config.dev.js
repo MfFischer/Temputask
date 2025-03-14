@@ -3,14 +3,13 @@ const path = require('path');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Comment out static export for development
-  // output: 'export',
-  // distDir: 'out',
+  output: 'export',
+  distDir: 'out',
   images: {
     unoptimized: true,
   },
-  // Remove pageExtensions filter that might be causing issues
-  // pageExtensions: ['page.tsx', 'page.ts', 'page.jsx', 'page.js'],
+  // Ensure trailingSlash is true for static export
+  trailingSlash: true,
   webpack: (config, { isServer }) => {
     if (!isServer) {
       // Don't attempt to import these modules on the client side

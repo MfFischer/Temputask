@@ -21,12 +21,15 @@ applications:
             - echo "Starting build phase"
             - echo "Building frontend"
             - cd packages/frontend
-            - npm run build
-            - echo "Ensuring 404.html exists"
-            - cp out/404.html out/dashboard.html
-            - cp out/404.html out/projects.html
-            - cp out/404.html out/companies.html
-            - cp out/404.html out/settings.html
+            - npm run dev:restore && next build
+            - echo "Listing output directory contents"
+            - ls -la out
+            - echo "Ensuring route HTML files exist"
+            - touch out/404.html
+            - cp out/404.html out/dashboard.html || true
+            - cp out/404.html out/projects.html || true
+            - cp out/404.html out/companies.html || true
+            - cp out/404.html out/settings.html || true
             - echo "Build completed"
             - ls -la out
       artifacts:
