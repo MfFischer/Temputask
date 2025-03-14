@@ -2,9 +2,9 @@ const path = require('path');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
-  output: 'export',
-  distDir: 'out',
+  //reactStrictMode: true,
+  //output: 'export',
+ // distDir: 'out',
   images: {
     unoptimized: true,
   },

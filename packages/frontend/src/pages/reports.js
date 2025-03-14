@@ -63,82 +63,82 @@ export default function ReportsPage() {
   };
   
   // Handle PDF export
-// Enhanced PDF export function with better error handling
-const handleExportPDF = async () => {
-  try {
-    // Validate that we have the necessary data before attempting to generate
-    if (!filteredEntries || filteredEntries.length === 0) {
-      alert('No entries to include in the PDF. Please adjust your filters.');
-      return;
-    }
-    
-    if (!dateRangeInfo || !dateRangeInfo.startDate || !dateRangeInfo.endDate) {
-      alert('Invalid date range for PDF generation.');
-      return;
-    }
-    
-    // Log what we're trying to generate
-    console.log('Generating PDF with:', {
-      entriesCount: filteredEntries.length,
-      dateRange: {
-        start: dateRangeInfo.startDate.toISOString(),
-        end: dateRangeInfo.endDate.toISOString()
-      },
-      filters
-    });
-    
-    // Add a timeout in case the PDF generation takes too long
-    const pdfPromise = generateBillableReport(
-      filteredEntries,
-      {
-        startDate: dateRangeInfo.startDate,
-        endDate: dateRangeInfo.endDate,
-        projectId: filters.project,
-        companyId: filters.company,
-        includeBillableOnly: filters.billable === 'billable'
-      },
-      {
-        currency: '$',
-        includeActivities: true,
-        includeTerms: false
+  // Enhanced PDF export function with better error handling
+  const handleExportPDF = async () => {
+    try {
+      // Validate that we have the necessary data before attempting to generate
+      if (!filteredEntries || filteredEntries.length === 0) {
+        alert('No entries to include in the PDF. Please adjust your filters.');
+        return;
       }
-    );
-    
-    // Set a timeout to prevent the function from hanging indefinitely
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('PDF generation timed out after 30 seconds')), 30000);
-    });
-    
-    const pdfBlob = await Promise.race([pdfPromise, timeoutPromise]);
-    
-    if (!pdfBlob || !(pdfBlob instanceof Blob)) {
-      throw new Error('PDF generation failed: Invalid response format');
+      
+      if (!dateRangeInfo || !dateRangeInfo.startDate || !dateRangeInfo.endDate) {
+        alert('Invalid date range for PDF generation.');
+        return;
+      }
+      
+      // Log what we're trying to generate
+      console.log('Generating PDF with:', {
+        entriesCount: filteredEntries.length,
+        dateRange: {
+          start: dateRangeInfo.startDate.toISOString(),
+          end: dateRangeInfo.endDate.toISOString()
+        },
+        filters
+      });
+      
+      // Add a timeout in case the PDF generation takes too long
+      const pdfPromise = generateBillableReport(
+        filteredEntries,
+        {
+          startDate: dateRangeInfo.startDate,
+          endDate: dateRangeInfo.endDate,
+          projectId: filters.project,
+          companyId: filters.company,
+          includeBillableOnly: filters.billable === 'billable'
+        },
+        {
+          currency: '$',
+          includeActivities: true,
+          includeTerms: false
+        }
+      );
+      
+      // Set a timeout to prevent the function from hanging indefinitely
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('PDF generation timed out after 30 seconds')), 30000);
+      });
+      
+      const pdfBlob = await Promise.race([pdfPromise, timeoutPromise]);
+      
+      if (!pdfBlob || !(pdfBlob instanceof Blob)) {
+        throw new Error('PDF generation failed: Invalid response format');
+      }
+      
+      // Save the file
+      saveAs(pdfBlob, `Tempu-Task-Report-${new Date().toISOString().slice(0, 10)}.pdf`);
+    } catch (error) {
+      // Detailed error logging
+      console.error('Error generating PDF:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        type: error.name,
+      });
+      
+      // More helpful error message to the user
+      if (error.message.includes('timed out')) {
+        alert('PDF generation timed out. The report may be too large or the server is busy. Please try with fewer entries or try again later.');
+      } else if (error.message.includes('network') || error.code === 'NETWORK_ERROR') {
+        alert('Network error while generating PDF. Please check your connection and try again.');
+      } else {
+        alert(`Failed to generate PDF: ${error.message || 'Unknown error'}. Please try again.`);
+      }
     }
-    
-    // Save the file
-    saveAs(pdfBlob, `Tempu-Task-Report-${new Date().toISOString().slice(0, 10)}.pdf`);
-  } catch (error) {
-    // Detailed error logging
-    console.error('Error generating PDF:', error);
-    console.error('Error details:', {
-      message: error.message,
-      stack: error.stack,
-      type: error.name,
-    });
-    
-    // More helpful error message to the user
-    if (error.message.includes('timed out')) {
-      alert('PDF generation timed out. The report may be too large or the server is busy. Please try with fewer entries or try again later.');
-    } else if (error.message.includes('network') || error.code === 'NETWORK_ERROR') {
-      alert('Network error while generating PDF. Please check your connection and try again.');
-    } else {
-      alert(`Failed to generate PDF: ${error.message || 'Unknown error'}. Please try again.`);
-    }
-  }
-};
+  };
 
-// State for email export modal
-const [showEmailModal, setShowEmailModal] = useState(false);
+  // State for email export modal
+  const [showEmailModal, setShowEmailModal] = useState(false);
   
   // Fetch data
   useEffect(() => {
@@ -305,10 +305,20 @@ const [showEmailModal, setShowEmailModal] = useState(false);
   const dateRangeInfo = getDateRangeInfo();
   const filteredEntries = getFilteredTimeEntries();
   
-  // Calculate summary stats
+  // Calculate summary stats - UPDATED to correctly handle distractions
   const calculateSummary = () => {
     const totalDuration = filteredEntries.reduce((acc, entry) => 
       acc + (entry.duration || 0), 0);
+    
+    // UPDATED: Calculate productive time - anything NOT marked as Distraction
+    const productiveTime = filteredEntries
+      .filter(entry => entry.category !== 'Distraction')
+      .reduce((acc, entry) => acc + (entry.duration || 0), 0);
+    
+    // UPDATED: Calculate distraction time - only entries explicitly marked as Distraction
+    const distractionTime = filteredEntries
+      .filter(entry => entry.category === 'Distraction')
+      .reduce((acc, entry) => acc + (entry.duration || 0), 0);
     
     const billableDuration = filteredEntries
       .filter(entry => entry.billable)
@@ -334,13 +344,23 @@ const [showEmailModal, setShowEmailModal] = useState(false);
       projectDurations[projectId] += entry.duration || 0;
     });
     
-    // Calculate productive vs distracted time
-    // For this example, we'll consider time on known projects as productive
-    const productiveTime = filteredEntries
-      .filter(entry => entry.project_id && entry.projects)
-      .reduce((acc, entry) => acc + (entry.duration || 0), 0);
-      
-    const distractionTime = totalDuration - productiveTime;
+    // UPDATED: Get distraction groups for top distractions
+    const distractionGroups = {};
+    filteredEntries
+      .filter(entry => entry.category === 'Distraction')
+      .forEach(entry => {
+        const description = entry.description || 'Other';
+        if (!distractionGroups[description]) {
+          distractionGroups[description] = 0;
+        }
+        distractionGroups[description] += entry.duration || 0;
+      });
+    
+    // Convert groups to sorted array
+    const topDistractions = Object.entries(distractionGroups)
+      .map(([name, duration]) => ({ name, duration }))
+      .sort((a, b) => b.duration - a.duration)
+      .slice(0, 3); // Get top 3
     
     // Convert all to hours
     const totalHours = totalDuration / 3600;
@@ -359,7 +379,8 @@ const [showEmailModal, setShowEmailModal] = useState(false);
       distractionHours,
       billableAmount,
       productivityScore,
-      projectDurations
+      projectDurations,
+      topDistractions
     };
   };
   
@@ -721,23 +742,25 @@ const [showEmailModal, setShowEmailModal] = useState(false);
                 </div>
               </Card>
               
-              {/* Top Distractions */}
+              {/* Top Distractions - UPDATED to use actual data */}
               <Card className="p-6">
                 <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Top Distractions</h2>
-                <ul className="space-y-3">
-                  <li className="flex items-center justify-between">
-                    <span className="text-gray-700 dark:text-gray-300">Social Media</span>
-                    <span className="text-red-500 dark:text-red-400 font-medium">45m</span>
-                  </li>
-                  <li className="flex items-center justify-between">
-                    <span className="text-gray-700 dark:text-gray-300">Email</span>
-                    <span className="text-red-500 dark:text-red-400 font-medium">32m</span>
-                  </li>
-                  <li className="flex items-center justify-between">
-                    <span className="text-gray-700 dark:text-gray-300">News Sites</span>
-                    <span className="text-red-500 dark:text-red-400 font-medium">28m</span>
-                  </li>
-                </ul>
+                {summary.topDistractions && summary.topDistractions.length > 0 ? (
+                  <ul className="space-y-3">
+                    {summary.topDistractions.map((distraction, index) => (
+                      <li key={index} className="flex items-center justify-between">
+                        <span className="text-gray-700 dark:text-gray-300">{distraction.name}</span>
+                        <span className="text-red-500 dark:text-red-400 font-medium">
+                          {formatDuration(distraction.duration / 3600)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-gray-500 dark:text-gray-400 text-center py-2">
+                    No distractions recorded in this period
+                  </p>
+                )}
               </Card>
             </div>
           </div>

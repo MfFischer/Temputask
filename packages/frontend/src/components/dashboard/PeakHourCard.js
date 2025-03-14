@@ -3,13 +3,25 @@ import { TimeTrackingContext } from '../../contexts/TimeTrackingContext';
 import Card from '../common/Card';
 
 export default function PeakHourCard() {
-  const { timeEntries, isLoading } = useContext(TimeTrackingContext);
+  const { timeEntries, getPeakHour, isLoading } = useContext(TimeTrackingContext);
   
-  // Mock data for peak productivity time
-  // This should be replaced with actual implementation once available
-  const mockPeakTime = timeEntries && timeEntries.length > 5 
-    ? { formatted: '10:00 AM - 12:00 PM' }
-    : null;
+  // Get actual peak hour data instead of using a mock
+  const peakHourData = getPeakHour();
+  
+  // Format the peak hour if available
+  const formatPeakHour = (hour) => {
+    if (hour === undefined) return null;
+    
+    // Convert 24h format to 12h format with AM/PM
+    const startHour = hour % 12 === 0 ? 12 : hour % 12;
+    const endHour = (hour + 1) % 12 === 0 ? 12 : (hour + 1) % 12;
+    const startAmPm = hour < 12 ? 'AM' : 'PM';
+    const endAmPm = (hour + 1) < 12 ? 'AM' : 'PM';
+    
+    return `${startHour}:00 ${startAmPm} - ${endHour}:00 ${endAmPm}`;
+  };
+  
+  const formattedPeakHour = peakHourData ? formatPeakHour(peakHourData.hour) : null;
   
   // If loading or no data
   if (isLoading) {
@@ -32,7 +44,8 @@ export default function PeakHourCard() {
     );
   }
   
-  if (!timeEntries.length || !mockPeakTime) {
+  // Don't check for length > 5, just check if we have any data
+  if (!timeEntries.length || !peakHourData || !formattedPeakHour) {
     return (
       <Card className="p-6">
         <h2 className="text-xl font-semibold mb-5 text-gray-900 dark:text-white flex items-center">
@@ -72,7 +85,7 @@ export default function PeakHourCard() {
           </div>
           
           <div className="ml-4">
-            <div className="text-xl font-medium text-gray-900 dark:text-white">{mockPeakTime.formatted}</div>
+            <div className="text-xl font-medium text-gray-900 dark:text-white">{formattedPeakHour}</div>
             <div className="text-sm text-gray-500 dark:text-gray-400">
               Most productive time
             </div>
@@ -80,9 +93,22 @@ export default function PeakHourCard() {
         </div>
         
         <div className="mt-3 text-sm text-gray-600 dark:text-gray-400">
-          Schedule your most important tasks during your peak productivity hours.
+          {peakHourData?.duration ? `${formatDuration(peakHourData.duration)} of focused work during this hour.` : 
+            'Schedule your most important tasks during your peak productivity hours.'}
         </div>
       </div>
     </Card>
   );
+}
+
+// Helper function to format duration in seconds to a readable string
+function formatDuration(seconds) {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  } else {
+    return `${minutes}m`;
+  }
 }

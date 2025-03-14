@@ -31,7 +31,7 @@ const Footer = () => {
             </p>
           </div>
           
-          {/* Quick links */}
+          {/* Quick links - Aligned with Sidebar for consistency */}
           <div className="col-span-1">
             <h3 className="text-pink-200 font-medium mb-3 text-sm md:text-base">Quick Links</h3>
             <ul className="space-y-2 text-xs md:text-sm">
@@ -48,6 +48,16 @@ const Footer = () => {
               <li>
                 <Link href="/focus" className="text-indigo-100 hover:text-white transition-colors">
                   Focus Mode
+                </Link>
+              </li>
+              <li>
+                <Link href="/reports" className="text-indigo-100 hover:text-white transition-colors">
+                  Reports
+                </Link>
+              </li>
+              <li>
+                <Link href="/insights" className="text-indigo-100 hover:text-white transition-colors">
+                  Insights
                 </Link>
               </li>
             </ul>
@@ -67,6 +77,11 @@ const Footer = () => {
                   Terms of Service
                 </Link>
               </li>
+              <li>
+                <Link href="/settings" className="text-indigo-100 hover:text-white transition-colors">
+                  Settings
+                </Link>
+              </li>
             </ul>
           </div>
           
@@ -78,12 +93,22 @@ const Footer = () => {
                 Questions or feedback?
               </p>
               <a 
-                href="mailto:support@temputaskcom" 
+                href="mailto:support@temputask.com"
                 className="inline-block text-pink-200 hover:text-pink-100 transition-colors text-xs md:text-sm"
               >
-                support@temputaskcom
+                support@temputask.com
               </a>
             </div>
+           {/* Social media icons */}
+          <div className="mt-3 flex space-x-3">
+            {/* X (formerly Twitter) */}
+            <a href="#" className="text-indigo-100 hover:text-white">
+              <span className="sr-only">X</span>
+              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
+              </svg>
+            </a>
+          </div>
           </div>
         </div>
         

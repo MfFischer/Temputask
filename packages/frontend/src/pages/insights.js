@@ -34,39 +34,66 @@ export default function InsightsPage() {
   const [insightsData, setInsightsData] = useState(null);
   const [activeSection, setActiveSection] = useState('overview'); // 'overview', 'flow', 'switching', 'distractions', 'recommendations', 'peers', 'schedule', 'saved'
   const [compareMode, setCompareMode] = useState(false);
+  const [dataLoadError, setDataLoadError] = useState(false);
   
   // Ensure data is loaded
   useEffect(() => {
     const loadData = async () => {
       setLocalLoading(true);
+      setDataLoadError(false);
+      
       try {
-        // Try to load time entries directly from the database
-        const response = await fetch('/api/timeTracking/getTimeEntries?includeAll=true');
-        if (response.ok) {
-          const data = await response.json();
-          setInsightsData(data);
-        } else {
-          // Fallback to context if API fails
-          if (getTimeEntries && typeof getTimeEntries === 'function') {
-            await getTimeEntries();
+        // Try to load time entries directly from the database with API route
+        try {
+          const response = await fetch('/api/timeTracking/getTimeEntries?includeAll=true');
+          if (response.ok) {
+            const data = await response.json();
+            setInsightsData(data);
+            console.log("Successfully loaded data from API:", data?.timeEntries?.length || 0, "entries");
+          } else {
+            console.log("API route failed with status:", response.status);
+            throw new Error("API route failed");
+          }
+        } catch (apiError) {
+          console.log("API fallback: Using context data instead");
+          
+          // If API fails, make sure we still use the context data
+          if (timeEntries && timeEntries.length > 0) {
+            console.log("Using context data:", timeEntries.length, "entries");
+          } else if (getTimeEntries && typeof getTimeEntries === 'function') {
+            console.log("Trying to fetch entries using getTimeEntries function");
+            try {
+              await getTimeEntries();
+            } catch (ctxError) {
+              console.error("Error fetching from context:", ctxError);
+            }
           }
         }
       } catch (error) {
         console.error("Error loading time entries:", error);
+        setDataLoadError(true);
       } finally {
         setLocalLoading(false);
       }
     };
     
     loadData();
-  }, [getTimeEntries]);
+  }, [timeEntries, getTimeEntries]);
   
   // Filter time entries based on selected range
   const getFilteredEntries = () => {
     // First check if we have data from direct API call
-    const entries = insightsData?.timeEntries || timeEntries || [];
+    let entries = insightsData?.timeEntries || timeEntries;
     
-    if (!entries || entries.length === 0) {
+    // Ensure we have an array even if both sources failed
+    if (!entries || !Array.isArray(entries)) {
+      console.log("No entries found, using empty array");
+      entries = [];
+    } else {
+      console.log("Using entries for filter:", entries.length);
+    }
+    
+    if (entries.length === 0) {
       return [];
     }
     
@@ -94,12 +121,32 @@ export default function InsightsPage() {
   };
   
   const filteredEntries = getFilteredEntries();
+  console.log("Filtered entries:", filteredEntries.length);
   
   // Calculate productivity score (0-100)
   const calculateProductivityScore = () => {
     const currentSummary = insightsData?.summary || summary;
     
-    if (!currentSummary || !currentSummary.totalTracked) return 0;
+    if (!currentSummary || !currentSummary.totalTracked) {
+      // If no summary available, try to calculate from time entries
+      if (filteredEntries.length > 0) {
+        const totalDuration = filteredEntries.reduce((acc, entry) => 
+          acc + (entry.duration || 0), 0);
+        
+        const productiveDuration = filteredEntries
+          .filter(entry => entry.category !== 'Distraction')
+          .reduce((acc, entry) => acc + (entry.duration || 0), 0);
+        
+        if (totalDuration > 0) {
+          const productivePercentage = (productiveDuration / totalDuration) * 100;
+          const consistencyScore = Math.min(filteredEntries.length / 30, 1) * 20;
+          const focusScore = Math.min(productiveDuration / (3600 * 4), 1) * 30;
+          
+          return Math.min(Math.round(productivePercentage * 0.5 + consistencyScore + focusScore), 100);
+        }
+      }
+      return 0;
+    }
     
     const productivePercentage = (currentSummary.productive / currentSummary.totalTracked) * 100;
     const consistencyScore = Math.min(filteredEntries.length / 30, 1) * 20; // Max 20 points for consistency
@@ -135,38 +182,43 @@ export default function InsightsPage() {
   
   // Calculate summary if we don't have one
   const calculateSummary = () => {
-    if (summary && summary.totalTracked) return summary;
+    if ((summary && summary.totalTracked) || (insightsData?.summary && insightsData.summary.totalTracked)) {
+      return summary || insightsData.summary;
+    }
     
     // Calculate from filtered entries
     const summaryData = {
       totalTracked: 0,
       productive: 0,
-      distracted: 0
+      distracted: 0,
+      categories: {}
     };
     
     filteredEntries.forEach(entry => {
-      if (entry.start_time && entry.end_time) {
-        const start = new Date(entry.start_time);
-        const end = new Date(entry.end_time);
-        const duration = (end - start) / 1000; // in seconds
-        
-        summaryData.totalTracked += duration;
-        
-        // Consider focused time as productive
-        if (entry.focus_mode) {
-          summaryData.productive += duration;
-        } else {
-          // Default to 80% productive for non-focus time
-          summaryData.productive += (duration * 0.8);
-          summaryData.distracted += (duration * 0.2);
-        }
+      if (!entry.duration) return;
+      
+      // Add to total duration
+      summaryData.totalTracked += entry.duration;
+      
+      // Add to category duration
+      const category = entry.category || 'Other';
+      if (!summaryData.categories[category]) {
+        summaryData.categories[category] = 0;
+      }
+      summaryData.categories[category] += entry.duration;
+      
+      // Add to productive or distracted
+      if (category === 'Distraction') {
+        summaryData.distracted += entry.duration;
+      } else {
+        summaryData.productive += entry.duration;
       }
     });
     
     return summaryData;
   };
   
-  const currentSummary = summary || calculateSummary();
+  const currentSummary = calculateSummary();
   
   // Calculate comparison benchmarks (placeholder data for now)
   const getBenchmarkData = () => {
@@ -187,6 +239,40 @@ export default function InsightsPage() {
   };
   
   const benchmarkData = getBenchmarkData();
+  
+  // If we have error and no data to show
+  if (dataLoadError && filteredEntries.length === 0) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+          <h1 className="text-2xl font-bold flex items-center mb-4 md:mb-0">
+            <SparklesIcon className="h-6 w-6 mr-2 text-indigo-500" />
+            AI Insights
+          </h1>
+        </div>
+        
+        <Card className="p-8" animate={true} hover={true}>
+          <div className="text-center py-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 mb-4">
+              <ExclamationCircleIcon className="h-8 w-8" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Error Loading Data</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+              There was an issue loading your time tracking data. Please try again or go to the dashboard.
+            </p>
+            <div className="flex justify-center space-x-4">
+              <Button variant="outline" onClick={() => window.location.reload()}>
+                Try Again
+              </Button>
+              <Button variant="primary" onClick={() => router.push('/dashboard')}>
+                Go to Dashboard
+              </Button>
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
   
   return (
     <div className="container mx-auto px-4 py-6">

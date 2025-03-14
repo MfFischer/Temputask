@@ -4,7 +4,49 @@ import Card from '../common/Card';
 
 export default function AvgTimeCard() {
   const { timeEntries, getAverageTaskDuration, isLoading } = useContext(TimeTrackingContext);
-  const avgTime = getAverageTaskDuration();
+  
+  // Call the function with null parameter to get all categories
+  // and implement a fallback calculation
+  const calculateAvgTime = () => {
+    // First try the context function with explicit null parameter
+    const contextAvg = getAverageTaskDuration(null);
+    if (contextAvg) return contextAvg;
+    
+    // If that doesn't work, calculate manually
+    if (!timeEntries || timeEntries.length === 0) return null;
+    
+    // Filter for completed entries with duration that aren't distractions
+    const validEntries = timeEntries.filter(entry => 
+      entry.duration && 
+      entry.duration > 0 && 
+      entry.category !== 'Distraction');
+    
+    if (validEntries.length === 0) return null;
+    
+    // Calculate average
+    const totalDuration = validEntries.reduce((sum, entry) => sum + entry.duration, 0);
+    const avgSeconds = Math.round(totalDuration / validEntries.length);
+    
+    // Format to human-readable time
+    return {
+      seconds: avgSeconds,
+      formatted: formatDuration(avgSeconds)
+    };
+  };
+  
+  const avgTime = calculateAvgTime();
+  
+  // Helper function to format seconds into a readable duration
+  function formatDuration(seconds) {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    } else {
+      return `${minutes}m`;
+    }
+  }
   
   // If loading or no data
   if (isLoading) {
