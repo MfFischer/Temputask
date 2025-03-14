@@ -8,6 +8,7 @@ const currentDir = process.cwd();
 const mainConfigPath = path.join(currentDir, 'next.config.js');
 const prodConfigPath = path.join(currentDir, 'next.config.prod.js');
 const devConfigPath = path.join(currentDir, 'next.config.dev.js');
+const envLocalPath = path.join(currentDir, '.env.local');
 
 // Function to create a development config
 function createDevConfig() {
@@ -25,6 +26,16 @@ function createDevConfig() {
   console.log('✅ Created development config');
 }
 
+// Function to create development environment variables
+function createDevEnv() {
+  const envContent = `# Development environment variables
+NEXT_PUBLIC_EXPORT=false
+NODE_ENV=development
+`;
+  fs.writeFileSync(envLocalPath, envContent);
+  console.log('✅ Created development environment variables');
+}
+
 // Function to start dev mode
 function startDevMode() {
   // If we don't already have a dev config, create one
@@ -40,6 +51,10 @@ function startDevMode() {
   
   // Replace main config with dev config
   fs.copyFileSync(devConfigPath, mainConfigPath);
+  
+  // Create development environment variables
+  createDevEnv();
+  
   console.log('✅ Switched to development config');
   console.log('🚀 Ready to run "npm run dev"');
 }
@@ -54,6 +69,12 @@ function restoreProdMode() {
     console.log('✅ Restored production config');
   } else {
     console.log('⚠️ No production config backup found');
+  }
+  
+  // Remove development environment variables
+  if (fs.existsSync(envLocalPath)) {
+    fs.unlinkSync(envLocalPath);
+    console.log('✅ Removed development environment variables');
   }
 }
 

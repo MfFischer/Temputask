@@ -6,11 +6,13 @@ import Dashboard from '../components/dashboard/Dashboard';
 import FeatureCarousel from '../components/common/FeatureCarousel';
 import ReportsFeatureShowcase from '../components/common/ReportsFeatureShowcase';
 import { CheckCircleIcon } from '@heroicons/react/24/outline';
+import { useRouter } from 'next/router';
 
 export default function Home() {
   // Get auth context at the top level
   const authContext = useContext(AuthContext);
-  
+  const { user, isLoading: authLoading } = authContext || {};
+ 
   // Client-side detection
   const [isClient, setIsClient] = useState(false);
   
@@ -21,8 +23,10 @@ export default function Home() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
+  const router = useRouter();
   
-  // Add useEffect for global styling
+  // Add useEffect for global styling and client detection
   useEffect(() => {
     setIsClient(true);
     
@@ -35,8 +39,23 @@ export default function Home() {
     document.body.style.margin = '0';
     document.body.style.overflow = 'hidden';
     document.body.style.height = '100%';
+
+    // Add a fallback timeout to ensure loading doesn't get stuck
+    const loadingTimeout = setTimeout(() => {
+      // If still loading after 5 seconds, force refresh
+      if (authContext?.isLoading) {
+        console.log('Loading timeout reached, attempting to refresh auth state');
+        setLoadingTimedOut(true);
+        
+        // Try to refresh the page or auth state
+        if (typeof window !== 'undefined') {
+          // For static exports, try to navigate to the current page using router
+          router.replace(router.asPath);
+        }
+      }
+    }, 5000);
     
-    // Clean up function to restore default styles
+    // Clean up function to restore default styles and clear timeout
     return () => {
       document.documentElement.style.backgroundColor = '';
       document.documentElement.style.overflow = '';
@@ -46,8 +65,17 @@ export default function Home() {
       document.body.style.margin = '';
       document.body.style.overflow = '';
       document.body.style.height = '';
+      
+      clearTimeout(loadingTimeout);
     };
-  }, []);
+  }, [authContext?.isLoading, router]);
+
+  // Redirect to dashboard if user is authenticated
+  useEffect(() => {
+    if (user && !authLoading && isClient) {
+      router.push('/dashboard');
+    }
+  }, [user, authLoading, isClient, router]);
 
   // Handle form submission
   const handleSubmit = async (e) => {
@@ -82,26 +110,28 @@ export default function Home() {
     }
   };
 
-  // If not client-side yet, show a minimal loading state
+  // Enhance your loading state to be more informative
   if (!isClient) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-black">
-        <div className="text-xl text-white">Loading Tempu Task...</div>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-black">
+        <div className="text-xl text-white mb-4">Loading Tempu Task...</div>
+        <div className="text-sm text-gray-400">Initializing application</div>
       </div>
     );
   }
 
-  // If loading, show loading indicator
-  if (authContext?.isLoading) {
+  // If loading, show loading indicator with more information
+  if (authContext?.isLoading && !loadingTimedOut) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-black">
-        <div className="text-xl text-gray-300">Loading...</div>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-black">
+        <div className="text-xl text-gray-300 mb-4">Loading...</div>
+        <div className="text-sm text-gray-500">Checking authentication status</div>
       </div>
     );
   }
 
-  // If user is logged in, redirect to dashboard
-  if (authContext?.user) {
+  // If user is authenticated, show dashboard (this is a fallback, the useEffect should handle redirect)
+  if (user) {
     return <Dashboard />;
   }
 
@@ -246,11 +276,10 @@ export default function Home() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full px-4 py-2 border border-gray-700 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-gray-900 text-white"
-                  placeholder="you@example.com"
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
-
+              
               <div>
                 <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
                   Password
@@ -261,11 +290,10 @@ export default function Home() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full px-4 py-2 border border-gray-700 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-gray-900 text-white"
-                  placeholder="••••••••"
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
-
+              
               {authMode === 'signup' && (
                 <div>
                   <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-1">
@@ -277,16 +305,15 @@ export default function Home() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
-                    className="w-full px-4 py-2 border border-gray-700 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-gray-900 text-white"
-                    placeholder="••••••••"
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
               )}
-
+              
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 mt-6"
+                className="w-full py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Please wait...' : authMode === 'login' ? 'Sign in' : 'Create account'}
               </button>
@@ -312,16 +339,16 @@ export default function Home() {
             <div className="mt-8 pt-6 border-t border-gray-800">
               <div className="flex items-center justify-center space-x-4">
                 <div className="flex items-center">
-                  <CheckCircleIcon className="h-5 w-5 text-green-500 mr-1" />
-                  <span className="text-xs text-gray-400">Secure</span>
+                  <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
+                  <span className="text-sm text-gray-400">Secure</span>
                 </div>
                 <div className="flex items-center">
-                  <CheckCircleIcon className="h-5 w-5 text-green-500 mr-1" />
-                  <span className="text-xs text-gray-400">Privacy-focused</span>
+                  <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
+                  <span className="text-sm text-gray-400">No credit card</span>
                 </div>
                 <div className="flex items-center">
-                  <CheckCircleIcon className="h-5 w-5 text-green-500 mr-1" />
-                  <span className="text-xs text-gray-400">No credit card</span>
+                  <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
+                  <span className="text-sm text-gray-400">Cancel anytime</span>
                 </div>
               </div>
             </div>
