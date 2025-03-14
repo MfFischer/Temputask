@@ -23,12 +23,33 @@ applications:
             - cd packages/frontend
             - npm run dev:restore
             - export NEXT_PUBLIC_EXPORT=true
-            - npx next build
+            # Add this line to debug the build process
+            - echo "Next.js version:" && npx next --version
+            # Replace the build command with a more explicit one
+            - NODE_ENV=production npx next build
             - echo "Checking if out directory exists"
-            - ls -la
-            - echo "Creating index.html if it doesn't exist"
-            - mkdir -p out
-            - touch out/index.html
+            - ls -la out
+            # Create a proper index.html if it doesn't exist or is empty
+            - |
+              if [ ! -s out/index.html ]; then
+                echo "Creating proper index.html"
+                cat > out/index.html << 'EOL'
+                <!DOCTYPE html>
+                <html>
+                <head>
+                  <meta charset="utf-8" />
+                  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                  <title>Tempu Task</title>
+                  <link rel="stylesheet" href="/_next/static/css/app.css" />
+                  <script src="/_next/static/chunks/main.js" defer></script>
+                  <script src="/_next/static/chunks/pages/index.js" defer></script>
+                </head>
+                <body>
+                  <div id="__next"></div>
+                </body>
+                </html>
+                EOL
+              fi
             - cp out/index.html out/404.html || true
             - cp out/404.html out/dashboard.html || true
             - cp out/404.html out/projects.html || true

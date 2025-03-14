@@ -4,7 +4,7 @@ const path = require('path');
 const nextConfig = {
   reactStrictMode: true,
   
-  // Conditionally apply export settings based on environment
+  // Always use static export for production builds
   ...(process.env.NODE_ENV === 'production' || process.env.NEXT_PUBLIC_EXPORT === 'true' ? {
     output: 'export',
     distDir: 'out',
@@ -12,6 +12,8 @@ const nextConfig = {
       unoptimized: true,
     },
     trailingSlash: true,
+    // Add this to ensure proper static HTML generation
+    generateStaticParams: true,
   } : {
     // Development settings (no static export)
     images: {
