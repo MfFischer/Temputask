@@ -1,4 +1,4 @@
-import { pool } from '../../../lib/db';
+import { db } from '@shared/lib/db';  // Use the shared db import
 import { getServerSession } from 'next-auth/next';
 
 export default async function handler(req, res) {
@@ -15,16 +15,23 @@ export default async function handler(req, res) {
 
     const userId = session.user.id;
     
-    const result = await pool.query(
-      'SELECT trial_end_date FROM subscriptions WHERE user_id = $1',
-      [userId]
-    );
+    // Use the Supabase client from the shared db module
+    const { data, error } = await db.supabase
+      .from('subscriptions')
+      .select('trial_end_date')
+      .eq('user_id', userId)
+      .single();
+    
+    if (error) {
+      console.error('Error querying subscription:', error);
+      return res.status(500).json({ error: 'Database query error' });
+    }
 
-    if (!result.rows[0]) {
+    if (!data) {
       return res.status(404).json({ error: 'No subscription found' });
     }
 
-    const trialEnd = result.rows[0].trial_end_date;
+    const trialEnd = data.trial_end_date;
     const daysLeft = trialEnd ? Math.ceil((new Date(trialEnd) - new Date()) / (1000 * 60 * 60 * 24)) : 0;
     
     res.status(200).json({ daysLeft, trialEnd });
