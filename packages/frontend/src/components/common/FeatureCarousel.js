@@ -97,17 +97,32 @@ export default function FeatureCarousel() {
   const [touchEnd, setTouchEnd] = useState(0);
   const carouselRef = useRef(null);
   
-  // Navigate to next or previous slide
+  // Navigate to next or previous slide - improved to ensure it works on all devices
   const goToSlide = (index) => {
     // Wrap around if needed
     if (index < 0) index = features.length - 1;
     if (index >= features.length) index = 0;
     
     setActiveIndex(index);
+    // Force pause to ensure user control
+    setIsPaused(true);
   };
   
-  const nextSlide = () => goToSlide(activeIndex + 1);
-  const prevSlide = () => goToSlide(activeIndex - 1);
+  const nextSlide = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    goToSlide(activeIndex + 1);
+  };
+  
+  const prevSlide = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    goToSlide(activeIndex - 1);
+  };
   
   // Handle touch events for swipe on mobile
   const handleTouchStart = (e) => {
@@ -140,6 +155,37 @@ export default function FeatureCarousel() {
     return () => clearInterval(interval);
   }, [isPaused]);
   
+  // Add button click handlers outside of render for better performance
+  const handlePauseToggle = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsPaused(!isPaused);
+  };
+  
+  // Additional effect to handle button click interaction issues
+  useEffect(() => {
+    const container = carouselRef.current;
+    if (!container) return;
+    
+    // Ensure all buttons inside are properly clickable
+    const buttons = container.querySelectorAll('button');
+    const handleButtonFocus = () => setIsPaused(true);
+    
+    buttons.forEach(btn => {
+      btn.addEventListener('focus', handleButtonFocus);
+      btn.addEventListener('mousedown', (e) => e.stopPropagation());
+      btn.addEventListener('touchstart', (e) => e.stopPropagation());
+    });
+    
+    return () => {
+      buttons.forEach(btn => {
+        btn.removeEventListener('focus', handleButtonFocus);
+        btn.removeEventListener('mousedown', (e) => e.stopPropagation());
+        btn.removeEventListener('touchstart', (e) => e.stopPropagation());
+      });
+    };
+  }, []);
+  
   // Current feature details
   const currentFeature = features[activeIndex];
   
@@ -157,8 +203,9 @@ export default function FeatureCarousel() {
       <div className="absolute top-4 right-4 z-10">
         <button 
           className="p-1.5 rounded-full bg-black/30 text-white hover:bg-black/50"
-          onClick={() => setIsPaused(!isPaused)}
+          onClick={handlePauseToggle}
           aria-label={isPaused ? "Resume auto-play" : "Pause auto-play"}
+          type="button"
         >
           {isPaused ? 
             <PlayIcon className="h-4 w-4" /> : 
@@ -174,13 +221,13 @@ export default function FeatureCarousel() {
         </span>
       </div>
       
-      <div className="p-8">
+      <div className="p-6 md:p-8">
         {/* Feature content */}
-        <div className="min-h-[16rem]">
+        <div className="min-h-[16rem] relative">
           {features.map((feature, index) => (
             <div 
               key={feature.id}
-              className={`transition-all duration-500 ease-in-out absolute inset-0 p-8 ${
+              className={`transition-all duration-500 ease-in-out absolute inset-0 p-6 md:p-8 ${
                 index === activeIndex 
                   ? 'opacity-100 translate-x-0' 
                   : index < activeIndex 
@@ -189,9 +236,9 @@ export default function FeatureCarousel() {
               }`}
               aria-hidden={index !== activeIndex}
             >
-              <div className="flex flex-col md:flex-row md:items-center gap-8">
-                {/* Icon and title */}
-                <div className="md:w-1/3">
+              <div className="flex flex-col md:flex-row md:items-center gap-6 md:gap-8">
+                {/* Icon and title - adjusted for better mobile display */}
+                <div className="md:w-1/3 mb-6 md:mb-0">
                   <div className={`inline-flex items-center justify-center w-16 h-16 rounded-xl bg-gradient-to-br ${feature.color} mb-4 p-3`}>
                     <feature.icon className="h-full w-full text-white" />
                   </div>
@@ -201,15 +248,15 @@ export default function FeatureCarousel() {
                   <p className="text-gray-300 md:pr-4">{feature.description}</p>
                 </div>
                 
-                {/* Feature visualization */}
-                <div className="md:w-2/3 rounded-xl p-4 border border-gray-800 min-h-[12rem] flex items-center justify-center relative overflow-hidden group">
+                {/* Feature visualization - increased padding and adjusted min-height for mobile */}
+                <div className="md:w-2/3 rounded-xl p-4 md:p-6 border border-gray-800 min-h-[10rem] md:min-h-[12rem] flex items-center justify-center relative overflow-hidden group">
                   <div className="absolute inset-0 bg-gradient-to-br opacity-20 from-gray-900 to-black"></div>
                   
                   {/* Gradient overlay in feature color */}
                   <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-10 group-hover:opacity-20 transition-opacity duration-300`}></div>
                   
-                  {/* Feature icon as background */}
-                  <div className="absolute right-4 bottom-4 opacity-10">
+                  {/* Feature icon as background - moved more to the side on mobile */}
+                  <div className="absolute right-4 bottom-4 opacity-10 scale-75 md:scale-100">
                     <feature.icon className="h-24 w-24 text-white" />
                   </div>
                   
@@ -239,39 +286,47 @@ export default function FeatureCarousel() {
         </div>
         
         {/* Navigation controls */}
-        <div className="flex items-center justify-between mt-8">
+        <div className="flex items-center justify-between mt-6 md:mt-8">
           {/* Previous/Next buttons */}
           <div className="flex space-x-2">
             <button
               onClick={prevSlide}
-              className="w-8 h-8 rounded-full bg-black/30 hover:bg-black/50 flex items-center justify-center text-white focus:outline-none"
+              className="w-8 h-8 rounded-full bg-black/30 hover:bg-black/50 flex items-center justify-center text-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
               aria-label="Previous feature"
+              type="button"
             >
               <ChevronLeftIcon className="h-5 w-5" />
             </button>
             
             <button
               onClick={nextSlide}
-              className="w-8 h-8 rounded-full bg-black/30 hover:bg-black/50 flex items-center justify-center text-white focus:outline-none"
+              className="w-8 h-8 rounded-full bg-black/30 hover:bg-black/50 flex items-center justify-center text-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
               aria-label="Next feature"
+              type="button"
             >
               <ChevronRightIcon className="h-5 w-5" />
             </button>
           </div>
           
-          {/* Dots navigation */}
-          <div className="flex justify-center space-x-2">
+          {/* Dots navigation - hide on smallest screens */}
+          <div className="hidden xs:flex justify-center space-x-2">
             {features.map((_, index) => (
               <button
                 key={index}
-                onClick={() => setActiveIndex(index)}
-                className={`w-2 h-2 rounded-full transition-all ${
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setActiveIndex(index);
+                  setIsPaused(true);
+                }}
+                className={`w-2 h-2 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-indigo-400 ${
                   activeIndex === index 
-                    ? `bg-gradient-to-r ${features[index].color} w-8` 
+                    ? `bg-gradient-to-r ${features[index].color} w-6 md:w-8` 
                     : 'bg-gray-600 hover:bg-gray-500'
                 }`}
                 aria-label={`Go to feature ${index + 1}`}
                 aria-current={index === activeIndex ? 'true' : 'false'}
+                type="button"
               />
             ))}
           </div>

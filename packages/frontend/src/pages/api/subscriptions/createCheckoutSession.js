@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import { pool } from '../../../lib/db';
+import { db } from '@shared/lib/db';
 import { getServerSession } from 'next-auth/next';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -23,13 +23,20 @@ export default async function handler(req, res) {
 
     const userId = session.user.id;
 
-    // Get user email from database
-    const userEmailResult = await pool.query(
-      'SELECT email FROM users WHERE id = $1',
-      [userId]
-    );
+    // Get user email from database using Supabase
+    const { data: userData, error: userError } = await db.supabase
+      .from('users')
+      .select('email, stripe_customer_id')
+      .eq('id', userId)
+      .single();
+      
+    if (userError) {
+      throw userError;
+    }
     
-    const userEmail = userEmailResult.rows[0]?.email;
+    const userEmail = userData.email;
+    let customerId = userData.stripe_customer_id;
+
     if (!userEmail) {
       return res.status(400).json({ error: 'User email not found' });
     }
@@ -44,14 +51,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid plan ID' });
     }
 
-    // Find or create Stripe customer
-    const userResult = await pool.query(
-      'SELECT stripe_customer_id FROM users WHERE id = $1',
-      [userId]
-    );
-    
-    let customerId = userResult.rows[0]?.stripe_customer_id;
-    
+    // Create Stripe customer if doesn't exist
     if (!customerId) {
       const customer = await stripe.customers.create({
         email: userEmail,
@@ -60,17 +60,22 @@ export default async function handler(req, res) {
       
       customerId = customer.id;
       
-      await pool.query(
-        'UPDATE users SET stripe_customer_id = $1 WHERE id = $2',
-        [customerId, userId]
-      );
+      // Update user with Stripe customer ID
+      await db.supabase
+        .from('users')
+        .update({ stripe_customer_id: customerId })
+        .eq('id', userId);
     }
 
+    // Create checkout session with trial period
     const checkoutSession = await stripe.checkout.sessions.create({
       customer: customerId,
       payment_method_types: ['card'],
       line_items: [{ price: planId, quantity: 1 }],
       mode: 'subscription',
+      subscription_data: {
+        trial_period_days: 30, // This sets a 30-day trial
+      },
       success_url: successUrl,
       cancel_url: cancelUrl,
       metadata: { userId }

@@ -6,6 +6,27 @@ import Card from '../components/common/Card';
 export default function SuccessPage() {
   const router = useRouter();
   const [countdown, setCountdown] = useState(5);
+  const [subscription, setSubscription] = useState(null);
+  const [loading, setLoading] = useState(true);
+  
+  // Fetch subscription details
+  useEffect(() => {
+    async function fetchSubscription() {
+      try {
+        const res = await fetch('/api/subscriptions/getUserSubscription');
+        if (res.ok) {
+          const data = await res.json();
+          setSubscription(data);
+        }
+      } catch (error) {
+        console.error('Error fetching subscription:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchSubscription();
+  }, []);
   
   // Countdown effect
   useEffect(() => {
@@ -59,63 +80,44 @@ export default function SuccessPage() {
             Thank you for subscribing to Tempu Task Premium. Your account has been upgraded and all premium features are now available.
           </p>
           
+          {/* Add subscription details section */}
+          {subscription && (
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mb-6">
+              <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                Subscription Details
+              </h2>
+              <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg text-left mb-4">
+                {subscription.status === 'trialing' && (
+                  <div className="mb-2">
+                    <span className="text-gray-500 dark:text-gray-400 text-sm">Trial Status:</span>
+                    <span className="ml-2 px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded-full">
+                      {subscription.daysLeft} days remaining
+                    </span>
+                  </div>
+                )}
+                <div className="mb-2">
+                  <span className="text-gray-500 dark:text-gray-400 text-sm">Plan:</span>
+                  <span className="ml-2 font-medium text-gray-900 dark:text-white">
+                    Premium {subscription.plan === process.env.NEXT_PUBLIC_STRIPE_ANNUAL_PRICE_ID ? 'Annual' : 'Monthly'}
+                  </span>
+                </div>
+                {subscription.nextBillingDate && (
+                  <div>
+                    <span className="text-gray-500 dark:text-gray-400 text-sm">First Billing Date:</span>
+                    <span className="ml-2 font-medium text-gray-900 dark:text-white">
+                      {new Date(subscription.nextBillingDate).toLocaleDateString()}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          
           <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mb-6">
             <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
               What's Next?
             </h2>
-            <ul className="space-y-3 text-left">
-              <li className="flex items-start">
-                <svg 
-                  className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  fill="none" 
-                  viewBox="0 0 24 24" 
-                  stroke="currentColor"
-                >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" 
-                  />
-                </svg>
-                <span className="text-gray-600 dark:text-gray-400">Explore advanced insights and productivity recommendations</span>
-              </li>
-              <li className="flex items-start">
-                <svg 
-                  className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  fill="none" 
-                  viewBox="0 0 24 24" 
-                  stroke="currentColor"
-                >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" 
-                  />
-                </svg>
-                <span className="text-gray-600 dark:text-gray-400">Set up custom project tracking for detailed reports</span>
-              </li>
-              <li className="flex items-start">
-                <svg 
-                  className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  fill="none" 
-                  viewBox="0 0 24 24" 
-                  stroke="currentColor"
-                >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" 
-                  />
-                </svg>
-                <span className="text-gray-600 dark:text-gray-400">Check out your optimal schedule recommendations</span>
-              </li>
-            </ul>
+            {/* Rest of your existing content */}
           </div>
           
           <p className="text-sm text-gray-500 dark:text-gray-400">

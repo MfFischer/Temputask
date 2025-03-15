@@ -12,7 +12,7 @@
     },
     "dependencies": {
         "@heroicons/react": "^2.2.0",
-        "@supabase/auth-helpers-nextjs": "^0.7.0",
+        "@supabase/auth-helpers-nextjs": "^0.7.4",
         "@supabase/auth-helpers-react": "^0.4.0",
         "@supabase/supabase-js": "^2.31.0",
         "@tailwindcss/line-clamp": "^0.4.4",
@@ -37,7 +37,7 @@
         "stripe": "^14.0.0"
     },
     "devDependencies": {
-       "@tailwindcss/forms": "^0.5.10",
+        "@tailwindcss/forms": "^0.5.10",
         "@types/react": "19.0.10",
         "autoprefixer": "^10.4.14",
         "cross-env": "^7.0.3",

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSupabaseClient, useUser } from '@supabase/auth-helpers-react';
+import { useRouter } from 'next/router'; // Add Next.js router
 import { Pie } from 'react-chartjs-2';
 import { formatDuration } from '@tempos-ai/shared';
 import Card from '../common/Card';
@@ -13,6 +14,7 @@ export default function SiteActivityReport() {
   const [showExtensionPrompt, setShowExtensionPrompt] = useState(false);
   const supabase = useSupabaseClient();
   const user = useUser();
+  const router = useRouter(); // Initialize Next.js router
   
   // Load site activity data
   useEffect(() => {
@@ -185,6 +187,11 @@ export default function SiteActivityReport() {
     return 'Other';
   };
   
+  // Handle extension setup navigation with Next.js router
+  const handleSetupExtension = () => {
+    router.push('/extension-setup');
+  };
+  
   if (showExtensionPrompt) {
     return (
       <Card>
@@ -198,7 +205,7 @@ export default function SiteActivityReport() {
             Install our browser extension to track site activity and get more detailed productivity insights.
           </p>
           <div className="mt-4">
-            <Button onClick={() => window.location.href = '/extension-setup'}>
+            <Button onClick={handleSetupExtension}>
               Set Up Extension
             </Button>
           </div>

@@ -1,18 +1,33 @@
-import React, { useState, useContext } from 'react';
-import { useUser } from '@supabase/auth-helpers-react';
-import { AuthContext } from '../contexts/AuthContext';
+import React, { useState, useEffect } from 'react';
+import { useUser, useSupabaseClient } from '@supabase/auth-helpers-react';
+import { useRouter } from 'next/router';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 
 export default function ExtensionSetupPage() {
-  // Fix for the useUser() error - handle when it returns null
-  const supabaseUser = useUser();
-  const user = supabaseUser || {}; // Provide a fallback empty object
+  const router = useRouter();
+  const supabase = useSupabaseClient();
+  const user = useUser();
   
-  const { isLoading } = useContext(AuthContext);
   const [step, setStep] = useState(1);
   const [extensionInstalled, setExtensionInstalled] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState('pending'); // 'pending', 'connecting', 'connected', 'failed'
+  const [isPageMounted, setIsPageMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Effect to ensure page stays mounted and handle initial loading
+  useEffect(() => {
+    setIsPageMounted(true);
+    // Short delay to ensure auth is loaded
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
+    
+    return () => {
+      setIsPageMounted(false);
+      clearTimeout(timer);
+    };
+  }, []);
   
   // Browser detection
   const getBrowser = () => {
@@ -65,26 +80,50 @@ export default function ExtensionSetupPage() {
   
   // Connect to the extension
   const connectExtension = async () => {
-    if (!supabaseUser) return;
+    if (!user) return;
     
     // Show connecting state
     setConnectionStatus('connecting');
     
-    // In a real implementation, this would communicate with the extension
-    // For this example, we'll simulate a successful connection
-    const authToken = generateAuthToken();
-    
-    // Simulate API call to store the extension token
-    setTimeout(() => {
-      setConnectionStatus('connected');
-      setStep(3);
-    }, 1500);
+    try {
+      // In a real implementation, this would communicate with the extension
+      // For this example, we'll simulate a successful connection
+      const authToken = generateAuthToken();
+      
+      // Example: Store the extension token and status in user metadata
+      const { error } = await supabase
+        .from('user_settings')
+        .upsert({
+          user_id: user.id,
+          extension_installed: true,
+          extension_token: authToken
+        });
+      
+      if (error) {
+        console.error('Error storing extension token:', error);
+        setConnectionStatus('failed');
+        return;
+      }
+      
+      // Simulate a short delay for better UX
+      setTimeout(() => {
+        setConnectionStatus('connected');
+        setStep(3);
+      }, 1500);
+    } catch (err) {
+      console.error('Error connecting extension:', err);
+      setConnectionStatus('failed');
+    }
   };
   
   // Check if user is authenticated
   const isAuthenticated = () => {
-    if (isLoading) return false;
-    return !!supabaseUser;
+    return !!user;
+  };
+  
+  // Handle going to dashboard
+  const goToDashboard = () => {
+    router.push('/');
   };
   
   // If loading, show a spinner
@@ -97,7 +136,7 @@ export default function ExtensionSetupPage() {
   }
   
   // If not authenticated, show login prompt
-  if (!isAuthenticated()) {
+  if (!isAuthenticated() && isPageMounted) {
     return (
       <div className="container mx-auto px-4 py-6">
         <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Browser Extension Setup</h1>
@@ -115,7 +154,7 @@ export default function ExtensionSetupPage() {
                 Please log in to your Tempu Task account before setting up the extension.
               </p>
               <div className="mt-6">
-                <Button onClick={() => window.location.href = '/auth/login'}>
+                <Button onClick={() => router.push('/auth/login')}>
                   Log In
                 </Button>
               </div>
@@ -267,7 +306,7 @@ export default function ExtensionSetupPage() {
                   </div>
                   <div className="ml-3">
                     <p className="text-sm text-blue-700 dark:text-blue-300">
-                      You're currently logged in as: <strong>{user.email || 'User'}</strong>
+                      You're currently logged in as: <strong>{user?.email || 'User'}</strong>
                     </p>
                   </div>
                 </div>
@@ -335,7 +374,7 @@ export default function ExtensionSetupPage() {
             </div>
             
             <div className="mt-8 flex justify-center">
-              <Button onClick={() => window.location.href = '/'}>
+              <Button onClick={goToDashboard}>
                 Go to Dashboard
               </Button>
             </div>

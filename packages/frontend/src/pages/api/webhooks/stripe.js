@@ -50,34 +50,38 @@ export default async function handler(req, res) {
           // Get subscription details from Stripe
           const subscription = await stripe.subscriptions.retrieve(subscriptionId);
           
+          // Get price details to determine plan name
+          const priceId = subscription.items.data[0].price.id;
+          const price = await stripe.prices.retrieve(priceId);
+          const planName = price.nickname || (priceId === process.env.STRIPE_MONTHLY_PRICE_ID ? 'Monthly' : 'Annual');
+          
           // Update user's subscription in database
-          await pool.query(
-            `INSERT INTO subscriptions (
-              user_id,
-              stripe_subscription_id,
-              status,
-              plan_id,
-              current_period_start,
-              current_period_end,
-              created_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-            ON CONFLICT (user_id) DO UPDATE SET
-              stripe_subscription_id = $2,
-              status = $3,
-              plan_id = $4,
-              current_period_start = $5,
-              current_period_end = $6,
-              updated_at = $7`,
-            [
-              userId,
-              subscriptionId,
-              subscription.status,
-              subscription.items.data[0].price.id,
-              new Date(subscription.current_period_start * 1000),
-              new Date(subscription.current_period_end * 1000),
-              new Date()
-            ]
-          );
+          const { error } = await db.supabase
+            .from('subscriptions')
+            .upsert({
+              user_id: userId,
+              stripe_subscription_id: subscriptionId,
+              status: subscription.status,
+              plan: planName, // Use the plan name for the 'plan' field
+              plan_id: priceId, // Store the actual price ID
+              current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+              current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+              trial_start_date: subscription.trial_start 
+                ? new Date(subscription.trial_start * 1000).toISOString() 
+                : null,
+              trial_end_date: subscription.trial_end 
+                ? new Date(subscription.trial_end * 1000).toISOString() 
+                : null,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }, {
+              onConflict: 'user_id'
+            });
+            
+          if (error) {
+            console.error('Error updating subscription:', error);
+            throw error;
+          }
         }
         break;
       }
@@ -86,32 +90,46 @@ export default async function handler(req, res) {
         const subscription = event.data.object;
         
         // Find user by Stripe customer ID
-        const userResult = await pool.query(
-          'SELECT id FROM users WHERE stripe_customer_id = $1',
-          [subscription.customer]
-        );
+        const { data: users, error: userError } = await db.supabase
+          .from('users')
+          .select('id')
+          .eq('stripe_customer_id', subscription.customer);
+          
+        if (userError) {
+          throw userError;
+        }
         
-        if (userResult.rows.length > 0) {
-          const userId = userResult.rows[0].id;
+        if (users && users.length > 0) {
+          const userId = users[0].id;
+          
+          // Get price details to determine plan name
+          const priceId = subscription.items.data[0].price.id;
+          const price = await stripe.prices.retrieve(priceId);
+          const planName = price.nickname || (priceId === process.env.STRIPE_MONTHLY_PRICE_ID ? 'Monthly' : 'Annual');
           
           // Update subscription in database
-          await pool.query(
-            `UPDATE subscriptions SET
-              status = $1,
-              plan_id = $2,
-              current_period_start = $3,
-              current_period_end = $4,
-              updated_at = $5
-            WHERE user_id = $6`,
-            [
-              subscription.status,
-              subscription.items.data[0].price.id,
-              new Date(subscription.current_period_start * 1000),
-              new Date(subscription.current_period_end * 1000),
-              new Date(),
-              userId
-            ]
-          );
+          const { error } = await db.supabase
+            .from('subscriptions')
+            .update({
+              status: subscription.status,
+              plan: planName,
+              plan_id: priceId,
+              current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+              current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+              trial_start_date: subscription.trial_start 
+                ? new Date(subscription.trial_start * 1000).toISOString() 
+                : null,
+              trial_end_date: subscription.trial_end 
+                ? new Date(subscription.trial_end * 1000).toISOString() 
+                : null,
+              updated_at: new Date().toISOString()
+            })
+            .eq('user_id', userId);
+            
+          if (error) {
+            console.error('Error updating subscription:', error);
+            throw error;
+          }
         }
         break;
       }
@@ -120,22 +138,31 @@ export default async function handler(req, res) {
         const subscription = event.data.object;
         
         // Find user by Stripe customer ID
-        const userResult = await pool.query(
-          'SELECT id FROM users WHERE stripe_customer_id = $1',
-          [subscription.customer]
-        );
+        const { data: users, error: userError } = await db.supabase
+          .from('users')
+          .select('id')
+          .eq('stripe_customer_id', subscription.customer);
+          
+        if (userError) {
+          throw userError;
+        }
         
-        if (userResult.rows.length > 0) {
-          const userId = userResult.rows[0].id;
+        if (users && users.length > 0) {
+          const userId = users[0].id;
           
           // Update subscription status to canceled
-          await pool.query(
-            `UPDATE subscriptions SET
-              status = $1,
-              updated_at = $2
-            WHERE user_id = $3`,
-            ['canceled', new Date(), userId]
-          );
+          const { error } = await db.supabase
+            .from('subscriptions')
+            .update({
+              status: 'canceled',
+              updated_at: new Date().toISOString()
+            })
+            .eq('user_id', userId);
+            
+          if (error) {
+            console.error('Error updating subscription:', error);
+            throw error;
+          }
         }
         break;
       }

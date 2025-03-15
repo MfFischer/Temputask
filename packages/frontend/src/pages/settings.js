@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 import SettingsNavigation from '../components/settings/SettingsNavigation';
+import { useRouter } from 'next/router';
 
 export default function SettingsPage() {
   const { user, updateProfile, signOut } = useAuth();
+  const router = useRouter();
   const [isExporting, setIsExporting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState('');
@@ -18,6 +20,27 @@ export default function SettingsPage() {
   });
   const [isProfileSaving, setIsProfileSaving] = useState(false);
   const [profileSuccess, setProfileSuccess] = useState(false);
+  const [subscription, setSubscription] = useState(null);
+  const [subscriptionLoading, setSubscriptionLoading] = useState(true);
+  
+  // Fetch subscription data
+  useEffect(() => {
+    async function fetchSubscription() {
+      try {
+        const response = await fetch('/api/subscriptions/getUserSubscription');
+        if (response.ok) {
+          const data = await response.json();
+          setSubscription(data);
+        }
+      } catch (error) {
+        console.error('Error fetching subscription:', error);
+      } finally {
+        setSubscriptionLoading(false);
+      }
+    }
+    
+    fetchSubscription();
+  }, []);
   
   // Update profile
   const handleProfileUpdate = async (e) => {
@@ -217,6 +240,86 @@ export default function SettingsPage() {
                   </Button>
                 </div>
               </form>
+            </Card>
+            
+            {/* Subscription Information */}
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Subscription</h3>
+              
+              {subscriptionLoading ? (
+                <div className="py-2 text-gray-600 dark:text-gray-400">Loading subscription data...</div>
+              ) : subscription ? (
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>
+                    <div className="flex items-center mt-1">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        subscription.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
+                        subscription.status === 'trialing' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' : 
+                        'bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-300'
+                      }`}>
+                        {subscription.status === 'active' ? 'Active' :
+                         subscription.status === 'trialing' ? 'Trial' :
+                         subscription.status === 'canceled' ? 'Canceled' : 
+                         subscription.status}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {subscription.status === 'trialing' && (
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Trial Period</p>
+                      <p className="text-gray-900 dark:text-white">
+                        {subscription.daysLeft > 0 
+                          ? `${subscription.daysLeft} days remaining` 
+                          : 'Ends today'}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        {subscription.trialEndDate 
+                          ? `Trial ends on ${new Date(subscription.trialEndDate).toLocaleDateString()}`
+                          : ''}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {subscription.plan && (
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Plan</p>
+                      <p className="text-gray-900 dark:text-white">{subscription.plan}</p>
+                    </div>
+                  )}
+                  
+                  {subscription.nextBillingDate && (
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Next Billing Date</p>
+                      <p className="text-gray-900 dark:text-white">
+                        {new Date(subscription.nextBillingDate).toLocaleDateString()}
+                      </p>
+                    </div>
+                  )}
+                  
+                  <div className="pt-2">
+                    {subscription.status === 'trialing' ? (
+                      <Button onClick={() => router.push('/upgrade')}>
+                        Upgrade Now
+                      </Button>
+                    ) : (
+                      <Button variant="outline" onClick={() => router.push('/api/subscriptions/createCustomerPortalSession')}>
+                        Manage Subscription
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-gray-600 dark:text-gray-400">
+                    You are currently on the free plan with limited features.
+                  </p>
+                  <Button onClick={() => router.push('/upgrade')}>
+                    Upgrade to Premium
+                  </Button>
+                </div>
+              )}
             </Card>
             
             {/* Account Information */}

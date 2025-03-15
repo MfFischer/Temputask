@@ -1,10 +1,11 @@
-import { useState, useContext, useEffect } from 'react';
+import { useState, useContext, useEffect, useRef } from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
 import { AuthContext } from '../contexts/AuthContext';
 import Dashboard from '../components/dashboard/Dashboard';
 import FeatureCarousel from '../components/common/FeatureCarousel';
-import ReportsFeatureShowcase from '../components/common/ReportsFeatureShowcase';
+// Either comment this out if it doesn't exist, or ensure the path is correct
+// import ReportsFeatureShowcase from '../components/common/ReportsFeatureShowcase';
 import { CheckCircleIcon } from '@heroicons/react/24/outline';
 import { useRouter } from 'next/router';
 
@@ -26,19 +27,26 @@ export default function Home() {
   const [loadingTimedOut, setLoadingTimedOut] = useState(false);
   const router = useRouter();
   
+  // Add ref for scrolling to auth form
+  const authFormRef = useRef(null);
+  
   // Add useEffect for global styling and client detection
   useEffect(() => {
     setIsClient(true);
     
-    // Apply styles to html and body to eliminate white space
+    // Apply styles to html and body - allow scrolling on ALL devices
     document.documentElement.style.backgroundColor = 'black';
-    document.documentElement.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'auto';
     document.documentElement.style.height = '100%';
     
     document.body.style.backgroundColor = 'black';
     document.body.style.margin = '0';
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = 'auto';
     document.body.style.height = '100%';
+    
+    // Remove any extra spacing or padding that might cause the gap
+    document.body.style.padding = '0';
+    document.documentElement.style.padding = '0';
 
     // Add a fallback timeout to ensure loading doesn't get stuck
     const loadingTimeout = setTimeout(() => {
@@ -60,11 +68,13 @@ export default function Home() {
       document.documentElement.style.backgroundColor = '';
       document.documentElement.style.overflow = '';
       document.documentElement.style.height = '';
+      document.documentElement.style.padding = '';
       
       document.body.style.backgroundColor = '';
       document.body.style.margin = '';
       document.body.style.overflow = '';
       document.body.style.height = '';
+      document.body.style.padding = '';
       
       clearTimeout(loadingTimeout);
     };
@@ -107,6 +117,21 @@ export default function Home() {
       setError(err.message || 'An error occurred during authentication');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Handle free trial button click
+  const handleFreeTrialClick = () => {
+    setAuthMode('signup');
+    
+    // On mobile, scroll to the auth form after a short delay to ensure state update
+    if (window.innerWidth < 768 && authFormRef.current) {
+      setTimeout(() => {
+        authFormRef.current.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      }, 100);
     }
   };
 
@@ -157,31 +182,33 @@ export default function Home() {
             margin: 0;
             padding: 0;
             height: 100%;
-            overflow: hidden;
+            overflow: auto;
           }
           #__next {
             height: 100%;
-            overflow: hidden;
             background-color: black;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
           }
         `}</style>
       </Head>
 
-      <div className="flex flex-col md:flex-row bg-black text-white h-screen max-h-screen overflow-hidden">
+      <div className="flex flex-col md:flex-row bg-black text-white min-h-screen overflow-y-auto pb-0">
         {/* Header - visible on mobile only */}
         <header className="md:hidden p-6 flex items-center">
           <Image src="/icons/logo.svg" alt="Tempu Task Logo" width={40} height={40} className="mr-3" priority />
           <span className="text-xl font-bold tracking-wider">Tempu Task</span>
         </header>
 
-        {/* Left side: Content - Scrollable */}
-        <main className="w-full md:w-2/3 p-8 md:p-16 flex flex-col overflow-y-auto">
+        {/* Left side: Content - Always Scrollable */}
+        <main className="w-full md:w-2/3 p-6 md:p-16 flex flex-col overflow-y-auto">
           <div className="hidden md:flex items-center mb-16">
             <Image src="/icons/logo.svg" alt="Tempu Task Logo" width={40} height={40} className="mr-3" priority />
             <span className="text-xl font-bold tracking-wider">Tempu Task</span>
           </div>
 
-          <div className="my-auto">
+          <div className="mb-12">
             <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight mb-6">
               Take Control with<br />
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-600">AI-Powered Productivity,</span><br />
@@ -198,11 +225,13 @@ export default function Home() {
               <FeatureCarousel />
             </section>
 
-            {/* Reports Feature Showcase */}
+            {/* Comment out the ReportsFeatureShowcase if it causes errors */}
+            {/* 
             <section aria-labelledby="reports-heading" className="mb-12">
               <h2 id="reports-heading" className="sr-only">Reporting Features</h2>
               <ReportsFeatureShowcase />
             </section>
+            */}
 
             {/* Trial and Pricing Section */}
             <section aria-labelledby="pricing-heading" className="mb-12">
@@ -219,7 +248,7 @@ export default function Home() {
                 </div>
                 <button
                   className="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                  onClick={() => setAuthMode('signup')}
+                  onClick={handleFreeTrialClick}
                 >
                   Start Free Trial
                 </button>
@@ -227,7 +256,7 @@ export default function Home() {
             </section>
 
             {/* Testimonials or social proof */}
-            <div className="mt-10 p-6 border border-gray-800 rounded-xl bg-gradient-to-br from-gray-900 to-black">
+            <div className="mt-10 mb-8 p-6 border border-gray-800 rounded-xl bg-gradient-to-br from-gray-900 to-black">
               <p className="text-gray-300 italic">
                 "Since using Tempu Task, I've gained back 2 hours of productive time daily and finally understand my work patterns."
               </p>
@@ -247,9 +276,11 @@ export default function Home() {
         {/* Vertical divider line */}
         <div className="hidden md:block w-px bg-white/20 self-stretch"></div>
 
-        {/* Right side: Authentication - Fixed position with controlled height */}
-        <aside className="w-full md:w-1/3 md:fixed md:right-0 md:top-0 md:bottom-0 md:h-screen flex items-center justify-center p-8 bg-black overflow-y-auto">
-          <div className="w-full max-w-md">
+        {/* Right side: Authentication - Fixed position with controlled height on desktop, normal flow on mobile */}
+        <aside className="w-full md:w-1/3 md:fixed md:right-0 md:top-0 md:bottom-0 md:h-screen 
+                         flex items-center justify-center p-6 md:p-8 bg-black overflow-y-auto
+                         border-t border-gray-800 md:border-t-0 md:border-l">
+          <div ref={authFormRef} className="w-full max-w-md py-8">
             <div className="text-center mb-8">
               <h2 className="text-2xl font-bold text-white">
                 {authMode === 'login' ? 'Sign in to Tempu Task' : 'Create your account'}

@@ -1,5 +1,9 @@
+// In your shared/src/lib/db.ts file
 import { Pool, PoolConfig } from 'pg';
 import type { QueryResult } from 'pg';
+
+// Disable pg-native explicitly
+process.env.NODE_PG_FORCE_NATIVE = '0';
 
 // Only initialize the pool on the server side
 let pool: Pool | null = null;
@@ -16,10 +20,6 @@ if (typeof window === 'undefined' && process.env.DATABASE_URL) {
 
   // Initialize the pool with the config
   pool = new Pool(poolConfig);
-
-  // Explicitly disable native client
-  // @ts-ignore - This is a valid property but TypeScript doesn't know about it
-  pool.options.native = false;
 }
 
 export const db = {
@@ -34,3 +34,5 @@ export const db = {
     return pool.query(text, params);
   }
 };
+
+export { pool }; // Add this export to make pool available
