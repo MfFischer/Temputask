@@ -6,6 +6,10 @@
   ],
   "scripts": {
     "build": "npm run build --workspace=@tempos-ai/shared && npm run build --workspace=@tempos-ai/frontend",
-    "dev": "npm run dev --workspace=@tempos-ai/frontend"
+    "dev": "npm run dev --workspace=@tempos-ai/frontend",
+    "start": "npm start --workspace=@tempos-ai/frontend"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

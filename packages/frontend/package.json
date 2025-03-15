@@ -6,12 +6,9 @@
         "dev:setup": "node dev-script.js start",
         "dev": "npm run dev:setup && next dev",
         "dev:restore": "node dev-script.js restore",
-        "prebuild": "npm run dev:restore",
-        "build": "cross-env NEXT_PUBLIC_EXPORT=true next build && node enhance-static-export.js",
-        "build:debug": "cross-env NEXT_PUBLIC_EXPORT=true NODE_OPTIONS='--inspect' next build && node enhance-static-export.js",
-        "start": "next start",
-        "lint": "next lint",
-        "verify-export": "node verify-static-export.js"
+        "build": "next build",
+        "start": "next start -p ${PORT:-3000}",
+        "lint": "next lint"
     },
     "dependencies": {
         "@heroicons/react": "^2.2.0",
@@ -40,7 +37,7 @@
         "stripe": "^14.0.0"
     },
     "devDependencies": {
-        "@tailwindcss/forms": "^0.5.10",
+       "@tailwindcss/forms": "^0.5.10",
         "@types/react": "19.0.10",
         "autoprefixer": "^10.4.14",
         "cross-env": "^7.0.3",
